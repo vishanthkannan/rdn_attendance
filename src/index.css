@@ -318,17 +318,6 @@ button, input, select, textarea {
   margin-bottom: 1.5rem;
   box-shadow: var(--shadow-sm);
   position: relative;
-  overflow: hidden;
-}
-
-.week-navigator-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #0f172a;
 }
 
 .week-nav-main {
@@ -894,23 +883,37 @@ button, input, select, textarea {
   border: 1px solid #cbd5e1;
 }
 
+/* Table Rows & Zebra Striping (Alternating Gray and White) */
 .table-row {
   border-bottom: 1px solid var(--border-subtle);
   transition: background-color 0.15s;
-  background: #ffffff;
 }
 
-.table-row:hover {
-  background-color: #f8fafc;
+/* Odd rows: White */
+.attendance-table tbody tr.table-row:nth-child(odd) {
+  background-color: #ffffff;
+}
+.attendance-table tbody tr.table-row:nth-child(odd) .worker-cell {
+  background-color: #ffffff;
+}
+
+/* Even rows: Clean subtle Gray */
+.attendance-table tbody tr.table-row:nth-child(even) {
+  background-color: #f1f5f9;
+}
+.attendance-table tbody tr.table-row:nth-child(even) .worker-cell {
+  background-color: #f1f5f9;
+}
+
+/* Hover highlight across row and sticky worker cell */
+.attendance-table tbody tr.table-row:hover,
+.attendance-table tbody tr.table-row:hover .worker-cell {
+  background-color: #e2e8f0 !important;
 }
 
 .table-row td {
   padding: 0.25rem 0.25rem;
   vertical-align: middle;
-}
-
-.table-row:hover .worker-cell {
-  background: #f8fafc;
 }
 
 .worker-identity {
@@ -1466,9 +1469,6 @@ button, input, select, textarea {
   box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
 }
 
-.week-navigator-card.is-closed-week::before {
-  background: #dc2626;
-}
 
 /* ==========================================================================
    Mason Sticky Header Wrapper & Modal Classes

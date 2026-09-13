@@ -5,6 +5,7 @@ import CellEditorModal from './components/CellEditorModal';
 import AddMasonModal from './components/AddMasonModal';
 import AddWorkerModal from './components/AddWorkerModal';
 import WholeWeekModal from './components/WholeWeekModal';
+import ExportModal from './components/ExportModal';
 import { 
   getDaysOfWeek, 
   formatWeekRange, 
@@ -55,6 +56,7 @@ export default function App() {
 
   const [isAddMasonOpen, setIsAddMasonOpen] = useState(false);
   const [isAddWorkerOpen, setIsAddWorkerOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [targetMasonIdForWorker, setTargetMasonIdForWorker] = useState(null);
 
   const handleOpenAddWorker = (masonId = null) => {
@@ -242,9 +244,9 @@ export default function App() {
     );
   };
 
-  // Export CSV
+  // Export CSV Helper (with UTF-8 BOM for Excel compatibility)
   const handleExportCSV = () => {
-    const rangeStr = formatWeekRange(currentWeekStart);
+    const rangeStr = formatWeekRange(currentWeekStart).replace(/–/g, '-');
     const lockStatus = isCurrentWeekClosed ? 'CLOSED / LOCKED' : 'ACTIVE / OPEN';
     let csv = `Civil Workers Weekly Attendance Sheet\nWeek: ${rangeStr}\nStatus: ${lockStatus}\n\n`;
     
@@ -273,7 +275,7 @@ export default function App() {
       csv += `"${w.name}","${w.category}",${w.wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
     });
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
@@ -281,6 +283,7 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     showToast('Exported weekly muster roll to CSV');
   };
 
@@ -300,8 +303,8 @@ export default function App() {
         <div className="header-actions">
           <button 
             className="btn btn-secondary btn-sm" 
-            onClick={handleExportCSV}
-            title="Export CSV spreadsheet"
+            onClick={() => setIsExportModalOpen(true)}
+            title="Export CSV spreadsheet (Weekly or Monthly)"
           >
             <Download size={14} />
             Export CSV
@@ -410,11 +413,23 @@ export default function App() {
         onSaveWholeWeek={handleSaveWholeWeek}
       />
 
-      {/* Add Employee Modal (Employee Name, Category: Mason, M - Helper, F - Helper, Other, Wage) */}
+      {/* Add Employee Modal */}
       <AddMasonModal 
         isOpen={isAddWorkerOpen}
         onClose={() => setIsAddWorkerOpen(false)}
         onAddMason={handleAddEmployee}
+      />
+
+      {/* Export Report Modal (Weekly or Monthly Choice with UTF-8 BOM encoding) */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        currentWeekStart={currentWeekStart}
+        masons={masons}
+        attendance={attendance}
+        closedWeeks={closedWeeks}
+        daysOfWeek={daysOfWeek}
+        onExportDone={(msg) => showToast(msg)}
       />
 
       {/* Toast Notification */}

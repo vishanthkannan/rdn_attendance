@@ -1,10 +1,10 @@
 // Date utilities for Monday to Sunday civil workers weekly attendance
 
 export const PRESET_WEEKS = [
-  { id: '2026-08-25', label: '25 Aug – 31 Aug', startDate: '2026-08-25', endDate: '2026-08-31', year: 2026 },
-  { id: '2026-09-01', label: '01 Sep – 07 Sep', startDate: '2026-09-01', endDate: '2026-09-07', year: 2026 },
-  { id: '2026-09-08', label: '08 Sep – 14 Sep', startDate: '2026-09-08', endDate: '2026-09-14', year: 2026, isCurrent: true },
-  { id: '2026-09-15', label: '15 Sep – 21 Sep', startDate: '2026-09-15', endDate: '2026-09-21', year: 2026 }
+  { id: '2026-08-25', label: '25 Aug - 31 Aug', startDate: '2026-08-25', endDate: '2026-08-31', year: 2026 },
+  { id: '2026-09-01', label: '01 Sep - 07 Sep', startDate: '2026-09-01', endDate: '2026-09-07', year: 2026 },
+  { id: '2026-09-08', label: '08 Sep - 14 Sep', startDate: '2026-09-08', endDate: '2026-09-14', year: 2026, isCurrent: true },
+  { id: '2026-09-15', label: '15 Sep - 21 Sep', startDate: '2026-09-15', endDate: '2026-09-21', year: 2026 }
 ];
 
 export const CURRENT_WEEK_ID = '2026-09-08';
@@ -63,7 +63,7 @@ export function getDaysOfWeek(startDateStr) {
 }
 
 /**
- * Generate formatted range string: "08 Sep – 14 Sep 2026"
+ * Generate formatted range string: "08 Sep - 14 Sep 2026"
  */
 export function formatWeekRange(startDateStr) {
   const start = parseDateISO(startDateStr);
@@ -76,7 +76,7 @@ export function formatWeekRange(startDateStr) {
   const endM = MONTH_NAMES[end.getMonth()];
   const endY = end.getFullYear();
   
-  return `${startD} ${startM} – ${endD} ${endM} ${endY}`;
+  return `${startD} ${startM} - ${endD} ${endM} ${endY}`;
 }
 
 /**

@@ -56,7 +56,7 @@ export default function AddWorkerModal({
             <div>
               <h3>Add Employee</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Add worker to the weekly attendance roster
+                Add worker to the weekly attendance
               </p>
             </div>
           </div>

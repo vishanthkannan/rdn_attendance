@@ -8,10 +8,10 @@ const CATEGORY_DEFAULT_WAGES = {
   'Other': 700
 };
 
-export default function AddMasonModal({ 
-  isOpen, 
-  onClose, 
-  onAddMason 
+export default function AddMasonModal({
+  isOpen,
+  onClose,
+  onAddMason
 }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Mason');
@@ -55,13 +55,10 @@ export default function AddMasonModal({
             </div>
             <div>
               <h3>Add Employee</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Add worker to the weekly attendance roster
-              </p>
             </div>
           </div>
-          <button 
-            className="btn btn-secondary btn-icon" 
+          <button
+            className="btn btn-secondary btn-icon"
             onClick={onClose}
             aria-label="Close"
           >
@@ -82,7 +79,7 @@ export default function AddMasonModal({
                 type="text"
                 className="form-input"
                 required
-                placeholder="Enter employee name (e.g. Suresh, Ramesh, Mani)"
+                placeholder="Enter employee name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -122,7 +119,7 @@ export default function AddMasonModal({
                     type="text"
                     className="form-input"
                     required
-                    placeholder="Enter category name (e.g. Carpenter, Painter, Bar Bender)"
+                    placeholder="Enter category name"
                     value={otherCategory}
                     onChange={(e) => setOtherCategory(e.target.value)}
                     autoFocus
@@ -134,15 +131,15 @@ export default function AddMasonModal({
 
           {/* Modal Footer */}
           <div className="modal-footer">
-            <button 
-              type="button" 
-              className="btn btn-outline-red" 
+            <button
+              type="button"
+              className="btn btn-outline-red"
               onClick={onClose}
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-green"
             >
               <Check size={16} />
