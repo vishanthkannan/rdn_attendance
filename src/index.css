@@ -1,0 +1,2017 @@
+:root {
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+
+  /* Color Palette - Crisp, Modern White/Light Theme */
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f1f5f9;
+  --bg-surface-hover: #e2e8f0;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #0f172a;
+  
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  /* Brand & Accents - Clean Corporate Slate */
+  --accent-amber: #0f172a;
+  --accent-amber-light: #f8fafc;
+  --accent-amber-bg: rgba(15, 23, 42, 0.05);
+  
+  --role-mason: #1e293b;
+  --role-mason-bg: #f8fafc;
+  --role-mason-border: #cbd5e1;
+  
+  --role-mhelper: #334155;
+  --role-mhelper-bg: #f8fafc;
+  --role-mhelper-border: #cbd5e1;
+  
+  --role-fhelper: #475569;
+  --role-fhelper-bg: #f8fafc;
+  --role-fhelper-border: #cbd5e1;
+  
+  --color-advance: #334155;
+  --color-advance-bg: #f1f5f9;
+  --color-advance-border: #cbd5e1;
+  
+  --color-success: #0f172a;
+  --color-success-bg: #f1f5f9;
+  --color-success-border: #cbd5e1;
+  
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-elevated);
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Containers */
+.app-container {
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem;
+}
+
+/* Top App Bar */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-icon-box {
+  width: 44px;
+  height: 44px;
+  background: #0f172a;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+}
+
+.brand-title-group h1 {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.brand-title-group p {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Bespoke, Professional Button Design System (Crafted, Non-Generic)
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-family: var(--font-body);
+  font-weight: 550;
+  font-size: 0.83rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  padding: 0.48rem 0.95rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+  position: relative;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #0f172a;
+}
+
+/* Primary Button (Executive Dark Slate) */
+.btn-primary,
+.btn-blue {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+.btn-primary:hover,
+.btn-blue:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 5px rgba(15, 23, 42, 0.12);
+}
+
+/* Secondary Button (Refined White Elevation) */
+.btn-secondary,
+.btn-outline-blue {
+  background: #ffffff;
+  color: #334155;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.btn-secondary:hover,
+.btn-outline-blue:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Success / Affirmative Action (Forest Emerald) */
+.btn-green,
+.btn-success {
+  background: #047857;
+  color: #ffffff;
+  border-color: #065f46;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(4, 120, 87, 0.14);
+}
+.btn-green:hover,
+.btn-success:hover {
+  background: #065f46;
+  border-color: #064e3b;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 5px rgba(4, 120, 87, 0.18);
+}
+
+/* Danger / Close Action (Refined Crimson) */
+.btn-red,
+.btn-danger {
+  background: #be123c;
+  color: #ffffff;
+  border-color: #9f1239;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(190, 18, 60, 0.14);
+}
+.btn-red:hover,
+.btn-danger:hover {
+  background: #9f1239;
+  border-color: #881337;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 5px rgba(190, 18, 60, 0.18);
+}
+
+/* Outline / Cancel Action (Neutral Soft Danger) */
+.btn-outline-red {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.btn-outline-red:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* Button Sizing Utilities */
+.btn-sm {
+  padding: 0.38rem 0.78rem;
+  font-size: 0.79rem;
+  border-radius: 5px;
+  gap: 0.35rem;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Worker Row & Delete Button */
+.worker-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.btn-delete-worker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.btn-delete-worker:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* Week Header Card */
+.week-navigator-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.week-navigator-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #0f172a;
+}
+
+.week-nav-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.week-display-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.week-arrow-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  color: #334155;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+
+.week-arrow-btn:hover {
+  background: #f1f5f9;
+  border-color: #0f172a;
+  color: #0f172a;
+}
+
+.week-center-info {
+  text-align: center;
+  min-width: 260px;
+}
+
+.week-tag {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #475569;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.week-range-text {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.current-week-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-full);
+  margin-top: 0.3rem;
+  border: 1px solid #cbd5e1;
+}
+
+.current-week-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #0f172a;
+  border-radius: 50%;
+}
+
+/* Recent 4 Weeks Pills */
+.recent-weeks-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.recent-weeks-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-right: 0.25rem;
+}
+
+.week-pill {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.week-pill:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.week-pill.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.week-pill.active * {
+  color: #ffffff !important;
+}
+
+.week-pill.pill-closed {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.week-pill.pill-closed:hover {
+  background: #fecaca;
+  border-color: #f87171;
+  color: #991b1b;
+}
+
+.week-pill.active.pill-closed {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);
+}
+
+.week-pill.active.pill-closed * {
+  color: #ffffff !important;
+}
+
+/* Metric Summary Cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card-info h4 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+
+.metric-card-info .value {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.metric-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-card.work .metric-card-icon {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.metric-card.advance .metric-card-icon {
+  background: #f1f5f9;
+  color: #334155;
+}
+.metric-card.wages .metric-card-icon {
+  background: #f1f5f9;
+  color: #334155;
+}
+.metric-card.balance .metric-card-icon {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.metric-card.balance .value {
+  color: #0f172a;
+}
+
+/* Attendance Table Wrapper */
+.table-container {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: #ffffff;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.table-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.table-toolbar-title h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.table-container {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  position: relative;
+  width: 100%;
+}
+
+.table-responsive-wrapper,
+.table-scroll-area {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  display: block;
+}
+
+/* Polished Table Scrollbar */
+.table-responsive-wrapper::-webkit-scrollbar,
+.table-scroll-area::-webkit-scrollbar {
+  height: 9px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-track,
+.table-scroll-area::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-thumb,
+.table-scroll-area::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-thumb:hover,
+.table-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Under-Table Action Bar (Close / Reopen Week Button Only) */
+.table-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.attendance-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.attendance-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0.35rem;
+  border-bottom: 2px solid var(--border-strong);
+  border-right: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.attendance-table th:last-child {
+  border-right: none;
+}
+
+.attendance-table th.col-worker,
+.attendance-table th.col-worker-header,
+.worker-cell {
+  width: 135px;
+  min-width: 135px;
+  max-width: 145px;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #ffffff;
+  border-right: 2px solid var(--border-strong) !important;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+  padding: 0.35rem 0.4rem !important;
+}
+
+.attendance-table th.col-worker,
+.attendance-table th.col-worker-header {
+  z-index: 20;
+  background: #f8fafc;
+}
+
+.attendance-table th.col-day,
+.attendance-table th.col-day-header,
+.attendance-table td.col-day-cell {
+  width: 58px;
+  min-width: 58px;
+  max-width: 62px;
+  text-align: center;
+  padding: 0.25rem 0.15rem;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+.col-day-header .day-name {
+  font-weight: 700;
+  font-size: 0.68rem;
+  color: #1e293b;
+}
+
+.col-day-header .day-date {
+  font-size: 0.62rem;
+  color: #64748b;
+  margin-top: 0.05rem;
+}
+
+.attendance-table th.col-stat,
+.attendance-table td.col-stat {
+  text-align: right;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.attendance-table th.col-stat {
+  vertical-align: bottom;
+  padding: 0.4rem 0.5rem;
+}
+
+.th-stat-title {
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: #1e293b;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.th-stat-sub {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 0.15rem;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Individual Column Widths - Zero Overlapping Guaranteed */
+.attendance-table th.col-stat-advance,
+.attendance-table td.col-stat-advance {
+  width: 105px;
+  min-width: 105px;
+}
+
+.attendance-table th.col-stat-work,
+.attendance-table td.col-stat-work {
+  width: 80px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.attendance-table th.col-stat-wage,
+.attendance-table td.col-stat-wage {
+  width: 95px;
+  min-width: 95px;
+  text-align: right;
+  padding: 0.35rem 0.4rem;
+}
+
+/* Inline Wages per Work Input Field */
+.table-wage-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 82px;
+}
+
+.wage-input-prefix {
+  position: absolute;
+  left: 0.38rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.table-wage-input {
+  width: 100%;
+  height: 27px;
+  padding: 0.15rem 0.35rem 0.15rem 1.05rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+  box-sizing: border-box;
+}
+
+.table-wage-input:focus {
+  border-color: #2563eb;
+  background: #f8faff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+  outline: none;
+}
+
+.table-wage-input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* Hide number input spinners for clean look */
+.table-wage-input::-webkit-inner-spin-button,
+.table-wage-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.table-wage-input {
+  -moz-appearance: textfield;
+}
+
+.attendance-table th.col-stat-amount,
+.attendance-table td.col-stat-amount {
+  width: 115px;
+  min-width: 115px;
+}
+
+.attendance-table th.col-stat-balance,
+.attendance-table td.col-stat-balance {
+  width: 130px;
+  min-width: 130px;
+}
+
+.worker-wage-rate-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.67rem;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  padding: 0.06rem 0.35rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.attendance-table th.col-stat:last-child,
+.attendance-table td.col-stat:last-child {
+  border-right: none;
+}
+
+/* Table Row Groups */
+.mason-group-header {
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mason-group-header td {
+  padding: 0.65rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #0f172a;
+}
+
+.mason-badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+}
+
+.table-row {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.15s;
+  background: #ffffff;
+}
+
+.table-row:hover {
+  background-color: #f8fafc;
+}
+
+.table-row td {
+  padding: 0.25rem 0.25rem;
+  vertical-align: middle;
+}
+
+.table-row:hover .worker-cell {
+  background: #f8fafc;
+}
+
+.worker-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.worker-name {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.worker-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Role Badges: Mason, M-Helper, F-Helper (Professional Palette) */
+.role-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.08rem 0.35rem;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  letter-spacing: 0.01em;
+}
+
+.role-badge.Mason {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+.role-badge.M-Helper {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+.role-badge.F-Helper {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.midweek-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 0.08rem 0.3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+}
+
+/* Minimized Day Attendance Cell Box */
+.day-cell-btn {
+  width: 100%;
+  min-width: 48px;
+  min-height: 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 0.18rem 0.1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  transition: all 0.15s ease;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.day-cell-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.day-cell-btn.disabled-cell {
+  background: #f8fafc;
+  border-style: dashed;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.day-cell-btn.disabled-cell:hover {
+  transform: none;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.not-joined-label {
+  font-size: 0.58rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.cell-att-count {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.cell-att-count.zero {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Borrowed Display: Professional Neutral Tag */
+.cell-borrowed-tag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 0.04rem 0.18rem;
+  border-radius: 3px;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* Summary Columns */
+.col-stat-value {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0 0.35rem;
+}
+
+.col-advance-val {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.col-work-val {
+  color: #0f172a;
+  font-weight: 800;
+  text-align: center;
+}
+
+.col-wage-val {
+  color: #475569;
+  font-weight: 600;
+  text-align: right;
+}
+
+.col-amount-val {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.col-balance-val {
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.88rem;
+}
+
+/* Footer Totals Row */
+.table-footer-row {
+  background: #f8fafc;
+  border-top: 2px solid #0f172a;
+  font-weight: 800;
+}
+
+.table-footer-row td {
+  padding: 0.45rem 0.35rem;
+  font-size: 0.8rem;
+}
+
+.footer-total-cell {
+  width: 135px;
+  min-width: 135px;
+  max-width: 145px;
+  position: sticky;
+  left: 0;
+  background: #f8fafc;
+  z-index: 15;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.74rem;
+  border-right: 2px solid var(--border-strong) !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  padding: 0.45rem 0.4rem !important;
+}
+
+.footer-day-total {
+  width: 58px;
+  min-width: 58px;
+  max-width: 62px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #475569;
+  border-bottom: 2px solid #0f172a;
+  border-right: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+  padding: 0.3rem 0.15rem;
+}
+.footer-day-total .day-sum-work {
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.84rem;
+}
+.footer-day-total .day-sum-adv {
+  color: #475569;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+/* Modal Overlay & Card (White Theme) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1.5rem;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(15px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #ffffff;
+}
+
+.modal-footer {
+  padding: 1.15rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: #f8fafc;
+}
+
+/* Forms */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.form-input, .form-select {
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.9rem;
+  color: #0f172a;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-input:focus, .form-select:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+/* Quick Select Buttons in Modal */
+.quick-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.quick-chip {
+  background: #f8fafc;
+  border: 1px solid var(--border-strong);
+  color: #1e293b;
+  padding: 0.5rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.quick-chip:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.quick-chip.selected {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.input-with-symbol {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-symbol {
+  position: absolute;
+  left: 0.9rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.input-with-symbol .form-input {
+  padding-left: 2.2rem;
+  width: 100%;
+}
+
+/* Notice / Helper Box */
+.notice-box {
+  background: #f8fafc;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  color: #334155;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+/* Toast Message */
+.toast-notice {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #ffffff;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 1000;
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Print Stylesheet */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+  }
+  .top-navbar, .recent-weeks-container, .header-actions, .table-toolbar, .week-arrow-btn, .btn {
+    display: none !important;
+  }
+  .week-navigator-card {
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
+    color: #000000 !important;
+    padding: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .week-navigator-card::before {
+    display: none !important;
+  }
+  .week-range-text {
+    color: #000000 !important;
+    font-size: 1.25rem !important;
+  }
+  .attendance-table {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+  }
+  .attendance-table th, .attendance-table td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    padding: 4px 6px !important;
+  }
+  .day-cell-btn {
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .cell-borrowed-tag {
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    background: transparent !important;
+  }
+  .col-balance-val, .col-work-val, .col-advance-val {
+    color: #000000 !important;
+  }
+}
+
+/* ==========================================================================
+   Week Lock, Status Badges & Fill Week Actions
+   ========================================================================== */
+
+.btn-fill-week {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 550;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 0.16rem 0.48rem;
+  cursor: pointer;
+  margin-top: 0.2rem;
+  width: fit-content;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.12s ease;
+}
+
+.btn-fill-week:hover {
+  color: #0f172a;
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.btn-fill-week:active {
+  transform: scale(0.97);
+}
+
+.day-cell-btn.locked-cell {
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  box-shadow: none;
+  opacity: 0.9;
+}
+
+.day-cell-btn.locked-cell:hover {
+  transform: none;
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.week-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.week-status-badge.open {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  font-weight: 700;
+}
+
+.week-status-badge.closed {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  font-weight: 700;
+}
+
+.btn-close-week {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #b91c1c;
+}
+
+.btn-close-week:hover {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.week-closed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-left: 5px solid #dc2626;
+  border-radius: var(--radius-md);
+  color: #7f1d1d;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+}
+
+.week-navigator-card.is-closed-week::before {
+  background: #dc2626;
+}
+
+/* ==========================================================================
+   Mason Sticky Header Wrapper & Modal Classes
+   ========================================================================== */
+
+.mason-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  left: 1rem;
+  width: fit-content;
+  max-width: calc(100vw - 3rem);
+}
+
+.mobile-scroll-hint {
+  display: none;
+}
+
+.whole-week-grid-header {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.whole-week-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-main);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.whole-week-day-col .day-name-bold {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.whole-week-day-col .day-date-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.whole-week-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   Borrow Toggle Action Buttons (+ Button for Borrow/Advance)
+   ========================================================================== */
+
+.btn-add-borrow-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-md);
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-borrow-action:hover {
+  background: #f1f5f9;
+  border-color: #0f172a;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.borrow-active-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  animation: 0.2s ease-out fadeIn;
+}
+
+.btn-add-borrow-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-sm);
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-borrow-day:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Mobile-First Responsive Rules (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Container & Global Spacing */
+  .app-container {
+    padding: 0.65rem 0.5rem 2.5rem;
+  }
+
+  /* Top Navbar on Mobile */
+  .top-navbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.85rem 0.9rem;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .brand-badge {
+    gap: 0.65rem;
+  }
+
+  .brand-icon-box {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .brand-title-group h1 {
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+
+  .brand-title-group p {
+    font-size: 0.74rem;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    flex: 1 1 calc(50% - 0.4rem);
+    padding: 0.45rem 0.6rem;
+    font-size: 0.76rem;
+    justify-content: center;
+  }
+
+  /* Add Mason button takes priority full width */
+  .header-actions .btn-primary {
+    flex: 1 1 100%;
+    order: -1;
+    padding: 0.55rem;
+    font-size: 0.84rem;
+  }
+
+  /* Week Navigator Card on Mobile */
+  .week-navigator-card {
+    padding: 0.85rem 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .week-nav-main {
+    gap: 0.4rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .week-arrow-btn {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+  }
+
+  .week-center-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .week-tag {
+    font-size: 0.68rem;
+  }
+
+  .week-range-text {
+    font-size: 1.18rem;
+    line-height: 1.2;
+  }
+
+  /* Smooth horizontal carousel for recent weeks */
+  .recent-weeks-container {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-top: 0.75rem;
+    padding-bottom: 0.25rem;
+    gap: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .recent-weeks-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .recent-weeks-label {
+    display: none;
+  }
+
+  .week-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* Week Closed Banner */
+  .week-closed-banner {
+    padding: 0.7rem 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .week-closed-banner .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Table Toolbar */
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .table-toolbar-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .table-toolbar input.form-input {
+    width: 100% !important;
+    font-size: 0.82rem;
+  }
+
+  /* Table & Scrolling Area on Mobile */
+  .table-responsive-wrapper,
+  .table-scroll-area {
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+
+  .attendance-table {
+    min-width: 760px !important; /* Minimized on mobile so 5+ columns are immediately visible */
+    font-size: 0.76rem;
+  }
+
+  .attendance-table th {
+    padding: 0.4rem 0.25rem;
+    font-size: 0.65rem;
+  }
+
+  /* Sticky Worker / Category Column on Mobile */
+  .attendance-table th.col-worker,
+  .attendance-table th.col-worker-header,
+  .worker-cell {
+    min-width: 115px !important;
+    max-width: 125px !important;
+    width: 115px !important;
+    padding: 0.35rem 0.3rem !important;
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background: #ffffff !important;
+    border-right: 2px solid var(--border-strong) !important;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .attendance-table th.col-worker,
+  .attendance-table th.col-worker-header {
+    z-index: 20 !important;
+    background: #f8fafc !important;
+  }
+
+  .worker-name {
+    font-size: 0.76rem;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .btn-fill-week {
+    font-size: 0.58rem;
+    padding: 0.08rem 0.25rem;
+    margin-top: 0.1rem;
+  }
+
+  /* Minimized Day Columns on Mobile */
+  .attendance-table th.col-day,
+  .attendance-table th.col-day-header,
+  .attendance-table td.col-day-cell {
+    min-width: 52px !important;
+    width: 52px !important;
+    padding: 0.2rem 0.08rem !important;
+  }
+
+  .day-cell-btn {
+    min-width: 44px !important;
+    min-height: 38px !important;
+    padding: 0.12rem 0.08rem !important;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cell-att-count {
+    font-size: 0.84rem !important;
+  }
+
+  .cell-borrowed-tag {
+    font-size: 0.54rem !important;
+    padding: 0.03rem 0.15rem !important;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  /* Compact Stat Columns on Mobile - Clean Dedicated Widths */
+  .attendance-table th.col-stat,
+  .attendance-table td.col-stat {
+    padding: 0.35rem 0.35rem !important;
+    font-size: 0.74rem;
+  }
+
+  .attendance-table th.col-stat-advance,
+  .attendance-table td.col-stat-advance {
+    width: 90px !important;
+    min-width: 90px !important;
+  }
+
+  .attendance-table th.col-stat-work,
+  .attendance-table td.col-stat-work {
+    width: 65px !important;
+    min-width: 65px !important;
+  }
+
+  .attendance-table th.col-stat-wage,
+  .attendance-table td.col-stat-wage {
+    width: 80px !important;
+    min-width: 80px !important;
+  }
+
+  .attendance-table th.col-stat-amount,
+  .attendance-table td.col-stat-amount {
+    width: 95px !important;
+    min-width: 95px !important;
+  }
+
+  .attendance-table th.col-stat-balance,
+  .attendance-table td.col-stat-balance {
+    width: 105px !important;
+    min-width: 105px !important;
+  }
+
+  .col-stat-value {
+    font-size: 0.78rem !important;
+    padding: 0 0.3rem !important;
+  }
+
+  /* Mason Group Header */
+  .mason-group-header td {
+    padding: 0.45rem 0.6rem !important;
+  }
+
+  .mason-header-content {
+    position: sticky;
+    left: 0.5rem;
+    width: fit-content;
+    max-width: calc(100vw - 2.5rem);
+  }
+
+  .mason-badge-tag {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  /* Table Footer on Mobile */
+  .footer-total-cell {
+    width: 115px !important;
+    min-width: 115px !important;
+    font-size: 0.7rem !important;
+    padding: 0.35rem 0.3rem !important;
+  }
+
+  .footer-day-total {
+    width: 52px !important;
+    min-width: 52px !important;
+    padding: 0.25rem 0.08rem !important;
+  }
+
+  .footer-day-total .day-sum-work {
+    font-size: 0.8rem !important;
+  }
+
+  .footer-day-total .day-sum-adv {
+    font-size: 0.54rem !important;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 0.4rem;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: 100% !important;
+    max-height: 90vh;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 18px !important;
+    border-top-right-radius: 18px !important;
+  }
+
+  .modal-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .modal-header h3 {
+    font-size: 1.05rem;
+  }
+
+  .modal-body {
+    padding: 0.9rem;
+    gap: 0.9rem;
+    max-height: 72vh;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.55rem;
+    font-size: 0.85rem;
+  }
+
+  /* Whole Week Modal on Mobile */
+  .whole-week-grid-header {
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 0.4rem;
+    padding: 0.2rem 0.3rem;
+    font-size: 0.66rem;
+  }
+
+  .whole-week-row {
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 0.4rem;
+    padding: 0.4rem 0.45rem;
+  }
+
+  .whole-week-day-col .day-name-bold {
+    font-size: 0.8rem;
+  }
+
+  .whole-week-day-col .day-date-sub {
+    font-size: 0.65rem;
+  }
+
+  .whole-week-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.4rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* Add Mason Modal Wages Grid on Mobile */
+  .wage-rates-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Quick Chip Selection Grid in Cell Editor */
+  .quick-btn-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.35rem;
+  }
+
+  .quick-chip {
+    padding: 0.55rem 0.25rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Extra small devices (under 390px) */
+@media (max-width: 390px) {
+  .brand-title-group h1 {
+    font-size: 1.02rem;
+  }
+
+  .week-range-text {
+    font-size: 1.05rem;
+  }
+
+  .header-actions .btn {
+    font-size: 0.72rem;
+    padding: 0.4rem 0.45rem;
+  }
+
+  .attendance-table th.col-worker,
+  .attendance-table th.col-worker-header,
+  .worker-cell {
+    min-width: 105px !important;
+    max-width: 112px !important;
+    width: 105px !important;
+  }
+}
+
+
