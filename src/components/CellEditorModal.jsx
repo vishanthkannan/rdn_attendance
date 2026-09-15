@@ -86,13 +86,21 @@ export default function CellEditorModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <User size={18} color="var(--accent-amber)" />
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{worker.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                    {worker.groupName && worker.groupName !== worker.name ? (
+                      <>
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{worker.groupName} • </span>
+                        <span>{worker.name}</span>
+                      </>
+                    ) : (
+                      worker.name
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                     Wage Rate: ₹{worker.wagePerWork} / work
                   </div>
                 </div>
               </div>
-              <span className={`role-badge ${worker.role}`}>{worker.role}</span>
             </div>
 
             {/* Attendance Input */}

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import AttendanceCell from './AttendanceCell';
-import { Trash2, Zap } from 'lucide-react';
+import { Trash2, Zap, HardHat } from 'lucide-react';
 
 export default function AttendanceTable({
   daysOfWeek,
@@ -8,6 +8,7 @@ export default function AttendanceTable({
   weekAttendance,
   onCellClick,
   onDeleteWorker,
+  onDeleteGroup,
   isWeekClosed,
   onFillWholeWeek,
   onUpdateWorkerWage
@@ -38,6 +39,24 @@ export default function AttendanceTable({
     };
   };
 
+  // Group workers by groupId (or groupName)
+  const groupedWorkers = useMemo(() => {
+    const map = new Map();
+    workers.forEach((worker) => {
+      const gId = worker.groupId || worker.id;
+      const gName = worker.groupName || worker.name;
+      if (!map.has(gId)) {
+        map.set(gId, {
+          groupId: gId,
+          groupName: gName,
+          workers: []
+        });
+      }
+      map.get(gId).workers.push(worker);
+    });
+    return Array.from(map.values());
+  }, [workers]);
+
   // Grand totals across all individual workers
   let grandTotalWork = 0;
   let grandTotalAdvance = 0;
@@ -52,35 +71,14 @@ export default function AttendanceTable({
     grandTotalBalance += stats.balanceToBePaid;
   });
 
-  // Daily totals for bottom footer
-  const dayColumnTotals = daysOfWeek.map((day) => {
-    let workSum = 0;
-    let advanceSum = 0;
-
-    workers.forEach((worker) => {
-      const rowAtt = weekAttendance[worker.id] || {};
-      const cell = rowAtt[day.isoDate];
-      if (cell) {
-        workSum += (parseFloat(cell.attendance) || 0);
-        advanceSum += (parseFloat(cell.borrowed) || 0);
-      }
-    });
-
-    return {
-      isoDate: day.isoDate,
-      workSum,
-      advanceSum
-    };
-  });
-
   return (
     <div className="table-responsive-wrapper">
       <table className="attendance-table">
         <thead>
           {/* Main Top Header */}
           <tr className="table-main-header">
-            <th className="col-worker-header">
-              Worker / Category
+            <th className="col-worker-header" title="Worker / Category">
+              <div className="th-worker-title">Worker / Category</div>
             </th>
             {daysOfWeek.map((day) => (
               <th key={day.isoDate} className="col-day-header">
@@ -111,111 +109,169 @@ export default function AttendanceTable({
           </tr>
         </thead>
         <tbody>
-          {workers.map((worker) => {
-            const stats = getWorkerStats(worker.id, worker.wage);
-            const rowAtt = weekAttendance[worker.id] || {};
+          {groupedWorkers.map((group) => {
+            let groupAdvance = 0;
+            let groupAmount = 0;
+            let groupBalance = 0;
 
-            // Synthetic worker object for the cell editor / whole week modals
-            const workerObj = {
-              id: worker.id,
-              name: worker.name,
-              role: worker.category,
-              category: worker.category,
-              wagePerWork: worker.wage
-            };
+            group.workers.forEach((w) => {
+              const s = getWorkerStats(w.id, w.wage);
+              groupAdvance += s.totalAdvance;
+              groupAmount += s.totalAmount;
+              groupBalance += s.balanceToBePaid;
+            });
 
             return (
-              <tr key={worker.id} className="table-row">
-                {/* Individual Worker Identity Column */}
-                <td className="worker-cell">
-                  <div className="worker-identity">
-                    <div className="worker-name-row">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                        <span className="worker-name">{worker.name}</span>
-                        <span className={`role-badge ${worker.category ? worker.category.replace(/\s+/g, '') : ''}`}>
-                          {worker.category || 'Worker'}
-                        </span>
+              <React.Fragment key={`group-${group.groupId}`}>
+                {/* Group Header Row: Employee name entered by the user placed above the group */}
+                <tr className="mason-group-header">
+                  <td colSpan={daysOfWeek.length + 6} className="mason-group-header-cell">
+                    <div className="mason-header-content">
+                      <div className="mason-group-left">
+                        <div className="mason-badge-tag">
+                          <HardHat size={15} color="#b45309" />
+                          <span className="mason-group-name">{group.groupName}</span>
+                        </div>
                       </div>
-                      {!isWeekClosed && onDeleteWorker && (
-                        <button
-                          type="button"
-                          className="btn-delete-worker"
-                          onClick={() => onDeleteWorker(worker.id, worker.name)}
-                          title={`Delete ${worker.name}`}
-                          aria-label={`Delete ${worker.name}`}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                    {!isWeekClosed && onFillWholeWeek && (
-                      <button
-                        type="button"
-                        className="btn-fill-week btn-outline-blue"
-                        onClick={() => onFillWholeWeek(workerObj)}
-                        title="Fill or edit attendance for the whole week"
-                      >
-                        <Zap size={11} />
-                        Fill Week
-                      </button>
-                    )}
-                  </div>
-                </td>
 
-                {/* Mon to Sun Daily Cells */}
-                {daysOfWeek.map((day) => {
-                  const dayData = rowAtt[day.isoDate];
+                      <div className="mason-group-right">
+                        <div className="group-summary-stats">
+                          <span className="group-stat-item">
+                            Total: <strong style={{ color: 'var(--accent-amber, #d97706)' }}>₹{groupAmount.toLocaleString('en-IN')}</strong>
+                          </span>
+                          <span className="group-stat-sep">•</span>
+                          <span className="group-stat-item">
+                            Advance: <strong>₹{groupAdvance.toLocaleString('en-IN')}</strong>
+                          </span>
+                          <span className="group-stat-sep">•</span>
+                          <span className="group-stat-item">
+                            Balance: <strong style={{ color: '#2563eb' }}>₹{groupBalance.toLocaleString('en-IN')}</strong>
+                          </span>
+                        </div>
+
+                        {!isWeekClosed && onDeleteGroup && (
+                          <button
+                            type="button"
+                            className="btn-delete-group"
+                            onClick={() => onDeleteGroup(group.groupId, group.groupName)}
+                            title={`Delete employee group "${group.groupName}"`}
+                          >
+                            <Trash2 size={12} />
+                            <span>Delete Group</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* The 3 Worker Rows under this Group (Manson, M-Helper, F-Helper) */}
+                {group.workers.map((worker, wIndex) => {
+                  const isLastWorker = wIndex === group.workers.length - 1;
+                  const stats = getWorkerStats(worker.id, worker.wage);
+                  const rowAtt = weekAttendance[worker.id] || {};
+
+                  // Synthetic worker object for the cell editor / whole week modals
+                  const workerObj = {
+                    id: worker.id,
+                    groupId: group.groupId,
+                    groupName: group.groupName,
+                    name: worker.name,
+                    role: worker.category || worker.name,
+                    category: worker.category || worker.name,
+                    wagePerWork: worker.wage
+                  };
+
                   return (
-                    <td key={day.isoDate} className="col-day-cell">
-                      <AttendanceCell
-                        worker={workerObj}
-                        dayInfo={day}
-                        dayData={dayData}
-                        onClick={() => onCellClick(workerObj, day, dayData)}
-                        isLocked={isWeekClosed}
-                      />
-                    </td>
+                    <tr key={worker.id} className={`table-row ${isLastWorker ? 'group-last-row' : ''}`}>
+                      {/* Individual Worker Identity Column */}
+                      <td className="worker-cell">
+                        <div className="worker-identity">
+                          <div className="worker-name-row">
+                            <span className="worker-name">{worker.name}</span>
+                            {!isWeekClosed && onDeleteWorker && (
+                              <button
+                                type="button"
+                                className="btn-delete-worker"
+                                onClick={() => onDeleteWorker(worker.id, `${group.groupName} - ${worker.name}`)}
+                                title={`Delete ${worker.name} row`}
+                                aria-label={`Delete ${worker.name} row`}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                          {!isWeekClosed && onFillWholeWeek && (
+                            <button
+                              type="button"
+                              className="btn-fill-week btn-outline-blue"
+                              onClick={() => onFillWholeWeek(workerObj)}
+                              title={`Fill whole week for ${group.groupName} - ${worker.name}`}
+                            >
+                              <Zap size={11} />
+                              Fill Week
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Mon to Sun Daily Cells */}
+                      {daysOfWeek.map((day) => {
+                        const dayData = rowAtt[day.isoDate];
+                        return (
+                          <td key={day.isoDate} className="col-day-cell">
+                            <AttendanceCell
+                              worker={workerObj}
+                              dayInfo={day}
+                              dayData={dayData}
+                              onClick={() => onCellClick(workerObj, day, dayData)}
+                              isLocked={isWeekClosed}
+                            />
+                          </td>
+                        );
+                      })}
+
+                      {/* 1. Advance Amount Column (Sum of borrowed amounts) */}
+                      <td className="col-stat col-stat-advance col-advance-val tabular-nums">
+                        {stats.totalAdvance > 0 ? `₹${stats.totalAdvance.toLocaleString('en-IN')}` : '₹0'}
+                      </td>
+
+                      {/* 2. Total Work Column */}
+                      <td className="col-stat col-stat-work col-work-val tabular-nums">
+                        {stats.totalWork}
+                      </td>
+
+                      {/* 3. Wages per Work Input Column */}
+                      <td className="col-stat col-stat-wage">
+                        <div className="table-wage-input-wrapper">
+                          <span className="wage-input-prefix">₹</span>
+                          <input
+                            type="number"
+                            step="10"
+                            min="0"
+                            className="table-wage-input tabular-nums"
+                            value={worker.wage !== undefined ? worker.wage : ''}
+                            onChange={(e) => onUpdateWorkerWage && onUpdateWorkerWage(worker.id, e.target.value)}
+                            disabled={isWeekClosed}
+                            title={`Enter wages per work for ${group.groupName} - ${worker.name}`}
+                            placeholder="0"
+                          />
+                        </div>
+                      </td>
+
+                      {/* 4. Total Amount Column (Total Work × Wages per Work) */}
+                      <td className="col-stat col-stat-amount col-amount-val tabular-nums">
+                        ₹{stats.totalAmount.toLocaleString('en-IN')}
+                      </td>
+
+                      {/* 5. Balance to be Paid Column (Total Amount − Advance) */}
+                      <td className="col-stat col-stat-balance col-balance-val tabular-nums">
+                        ₹{stats.balanceToBePaid.toLocaleString('en-IN')}
+                      </td>
+                    </tr>
                   );
                 })}
-
-                {/* 1. Advance Amount Column (Sum of borrowed amounts) */}
-                <td className="col-stat col-stat-advance col-advance-val tabular-nums">
-                  {stats.totalAdvance > 0 ? `₹${stats.totalAdvance.toLocaleString('en-IN')}` : '₹0'}
-                </td>
-
-                {/* 2. Total Work Column */}
-                <td className="col-stat col-stat-work col-work-val tabular-nums">
-                  {stats.totalWork}
-                </td>
-
-                {/* 3. Wages per Work Input Column */}
-                <td className="col-stat col-stat-wage">
-                  <div className="table-wage-input-wrapper">
-                    <span className="wage-input-prefix">₹</span>
-                    <input
-                      type="number"
-                      step="10"
-                      min="0"
-                      className="table-wage-input tabular-nums"
-                      value={worker.wage !== undefined ? worker.wage : ''}
-                      onChange={(e) => onUpdateWorkerWage && onUpdateWorkerWage(worker.id, e.target.value)}
-                      disabled={isWeekClosed}
-                      title={`Enter wages per work for ${worker.name}`}
-                      placeholder="0"
-                    />
-                  </div>
-                </td>
-
-                {/* 4. Total Amount Column (Total Work × Wages per Work) */}
-                <td className="col-stat col-stat-amount col-amount-val tabular-nums">
-                  ₹{stats.totalAmount.toLocaleString('en-IN')}
-                </td>
-
-                {/* 5. Balance to be Paid Column (Total Amount − Advance) */}
-                <td className="col-stat col-stat-balance col-balance-val tabular-nums">
-                  ₹{stats.balanceToBePaid.toLocaleString('en-IN')}
-                </td>
-              </tr>
+              </React.Fragment>
             );
           })}
         </tbody>
@@ -224,17 +280,12 @@ export default function AttendanceTable({
         <tfoot>
           <tr className="table-footer-row">
             <td className="footer-total-cell">
-              Daily Totals
+              Total
             </td>
 
-            {/* Daily Total Columns */}
-            {dayColumnTotals.map((tot) => (
-              <td key={tot.isoDate} className="footer-day-total">
-                <div className="day-sum-work tabular-nums">{tot.workSum}</div>
-                {tot.advanceSum > 0 && (
-                  <div className="day-sum-adv tabular-nums">B: ₹{tot.advanceSum.toLocaleString('en-IN')}</div>
-                )}
-              </td>
+            {/* Empty Day Columns (Daily total fields removed) */}
+            {daysOfWeek.map((day) => (
+              <td key={day.isoDate} className="footer-day-empty" />
             ))}
 
             {/* Grand Total Advance */}

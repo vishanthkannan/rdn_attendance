@@ -29,10 +29,26 @@ import {
   Search,
   Lock,
   Unlock,
-  UserPlus
+  UserPlus,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function App() {
+  // Theme State (Persisted in localStorage: 'light' or 'dark')
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('rdn_theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('rdn_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Active Week State (Defaults to 08 Sep - 14 Sep 2026)
   const [currentWeekStart, setCurrentWeekStart] = useState(CURRENT_WEEK_ID);
 
@@ -106,11 +122,14 @@ export default function App() {
     return attendance[currentWeekStart] || {};
   }, [attendance, currentWeekStart]);
 
-  // Filtered masons based on search
+  // Filtered masons based on search (searches groupName, worker name, category)
   const filteredMasons = useMemo(() => {
     if (!searchTerm.trim()) return masons;
+    const term = searchTerm.toLowerCase();
     return masons.filter((m) => 
-      m.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (m.groupName && m.groupName.toLowerCase().includes(term)) ||
+      (m.name && m.name.toLowerCase().includes(term)) ||
+      (m.category && m.category.toLowerCase().includes(term))
     );
   }, [masons, searchTerm]);
 
@@ -213,25 +232,58 @@ export default function App() {
     showToast(`Updated whole week attendance for ${worker.name}`);
   };
 
-  // Add Employee Handler (Individual Worker: Name, Category, Wage)
-  const handleAddEmployee = ({ name, category, wage }) => {
-    const newWorker = {
-      id: `worker-${Date.now()}`,
-      name: name.trim(),
-      category: category.trim(),
-      wage: Math.max(0, parseFloat(wage) || 0)
-    };
-    setMasons((prev) => [...prev, newWorker]);
-    showToast(`Added ${newWorker.category} (${newWorker.name})`);
+  // Add Employee Handler (Adds 3 rows: Manson, M-Helper, F-Helper grouped by entered name)
+  const handleAddEmployee = ({ name, masonWage, mHelperWage, fHelperWage }) => {
+    const groupName = name.trim();
+    const groupId = `group-${Date.now()}`;
+    const newWorkers = [
+      {
+        id: `${groupId}_mason`,
+        groupId,
+        groupName,
+        name: 'Manson',
+        category: 'Manson',
+        wage: Math.max(0, parseFloat(masonWage) || 0)
+      },
+      {
+        id: `${groupId}_mhelper`,
+        groupId,
+        groupName,
+        name: 'M-Helper',
+        category: 'M-Helper',
+        wage: Math.max(0, parseFloat(mHelperWage) || 0)
+      },
+      {
+        id: `${groupId}_fhelper`,
+        groupId,
+        groupName,
+        name: 'F-Helper',
+        category: 'F-Helper',
+        wage: Math.max(0, parseFloat(fHelperWage) || 0)
+      }
+    ];
+
+    setMasons((prev) => [...prev, ...newWorkers]);
+    showToast(`Added employee ${groupName} with 3 rows (Manson, M-Helper, F-Helper)`);
   };
 
-  // Delete Individual Worker
+  // Delete Individual Worker Row
   const handleDeleteWorker = (workerId, workerName) => {
     if (isCurrentWeekClosed) return;
 
-    if (window.confirm(`Delete ${workerName}?`)) {
+    if (window.confirm(`Delete ${workerName} row?`)) {
       setMasons((prev) => prev.filter((w) => w.id !== workerId));
-      showToast(`Removed ${workerName}`);
+      showToast(`Removed row ${workerName}`);
+    }
+  };
+
+  // Delete Entire Employee Group
+  const handleDeleteGroup = (groupId, groupName) => {
+    if (isCurrentWeekClosed) return;
+
+    if (window.confirm(`Delete employee group "${groupName}" and all its rows?`)) {
+      setMasons((prev) => prev.filter((w) => (w.groupId || w.id) !== groupId));
+      showToast(`Removed employee group ${groupName}`);
     }
   };
 
@@ -248,11 +300,11 @@ export default function App() {
   const handleExportCSV = () => {
     const rangeStr = formatWeekRange(currentWeekStart).replace(/–/g, '-');
     const lockStatus = isCurrentWeekClosed ? 'CLOSED / LOCKED' : 'ACTIVE / OPEN';
-    let csv = `Civil Workers Weekly Attendance Sheet\nWeek: ${rangeStr}\nStatus: ${lockStatus}\n\n`;
+    let csv = `RDN CREATORS - Civil Workers Weekly Attendance Sheet\nWeek: ${rangeStr}\nStatus: ${lockStatus}\n\n`;
     
     // Headers
     const dayHeaders = daysOfWeek.map((d) => `"${d.dayName} (${d.dateNumber})"`).join(',');
-    csv += `"Worker Name","Category","Wage Rate",${dayHeaders},"Advance (B)","Total Work","Total Amount","Balance to be Paid"\n`;
+    csv += `"Employee Group","Worker / Role","Wage Rate",${dayHeaders},"Advance (B)","Total Work","Total Amount","Balance to be Paid"\n`;
 
     masons.forEach((w) => {
       const rowAtt = weekAttendance[w.id] || {};
@@ -272,7 +324,7 @@ export default function App() {
       const totalAmount = totalWork * (w.wage || 0);
       const balance = totalAmount - totalAdvance;
 
-      csv += `"${w.name}","${w.category}",${w.wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
+      csv += `"${w.groupName || w.name}","${w.name}",${w.wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
     });
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -287,20 +339,50 @@ export default function App() {
     showToast('Exported weekly muster roll to CSV');
   };
 
+  // Count unique employee groups
+  const groupCount = useMemo(() => {
+    return new Set(masons.map((m) => m.groupId || m.groupName || m.name)).size;
+  }, [masons]);
+
   return (
     <div className="app-container">
       {/* Top Navbar */}
       <header className="top-navbar">
         <div className="brand-badge">
-          <div className="brand-icon-box">
-            <Building2 size={24} />
-          </div>
+          <img 
+            src="/rdn_logo.png" 
+            alt="RDN CREATORS" 
+            className="brand-logo-img" 
+          />
+          <div className="brand-divider" />
           <div className="brand-title-group">
-            <h1>RDN Workers Weekly Attendance</h1>
+            <h1>RDN CREATORS</h1>
+            <p>Workers Weekly Attendance &amp; Payroll</p>
           </div>
         </div>
 
         <div className="header-actions">
+          {/* Black / Dark Theme Toggle Button */}
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Light theme' : 'Switch to Black theme'}
+            aria-label="Toggle Black Theme"
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun size={15} color="#fbbf24" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon size={15} color="#475569" />
+                <span>Black</span>
+              </>
+            )}
+          </button>
+
           <button 
             className="btn btn-secondary btn-sm" 
             onClick={() => setIsExportModalOpen(true)}
@@ -314,7 +396,7 @@ export default function App() {
           <button 
             className="btn btn-primary btn-sm"
             onClick={() => handleOpenAddWorker()}
-            title="Add employee (Mason, M - Helper, F - Helper, Other) to roster"
+            title="Add employee group (Manson, M - Helper, F - Helper) to roster"
           >
             <UserPlus size={16} />
             Add Employee
@@ -331,8 +413,6 @@ export default function App() {
         closedWeeks={closedWeeks}
       />
 
-
-
       {/* 2. Attendance Table Container */}
       <div className="table-container">
         {/* Table Toolbar */}
@@ -340,7 +420,7 @@ export default function App() {
           <div className="table-toolbar-title">
             <h3>Site Attendance &amp; Wages Roster</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              ({masons.length} Employees hired)
+              ({groupCount} {groupCount === 1 ? 'Group' : 'Groups'} • {masons.length} Rows)
             </span>
           </div>
 
@@ -365,6 +445,7 @@ export default function App() {
           weekAttendance={weekAttendance}
           onCellClick={handleCellClick}
           onDeleteWorker={handleDeleteWorker}
+          onDeleteGroup={handleDeleteGroup}
           isWeekClosed={isCurrentWeekClosed}
           onFillWholeWeek={handleOpenWholeWeek}
           onUpdateWorkerWage={handleUpdateWorkerWage}

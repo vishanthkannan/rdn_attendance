@@ -21,8 +21,8 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
   // Header Title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.setTextColor(15, 23, 42); // slate-900
-  doc.text('RDN Civil Workers Weekly Attendance & Payroll', 40, 40);
+  doc.setTextColor(6, 78, 59); // Forest emerald matching RDN CREATORS logo
+  doc.text('RDN CREATORS - Civil Workers Weekly Attendance & Payroll', 40, 40);
 
   // Subtitle / Info Row
   doc.setFont('helvetica', 'normal');
@@ -33,8 +33,8 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
 
   // Prepare Table Columns
   const tableColumns = [
-    { header: 'Worker Name', dataKey: 'name' },
-    { header: 'Category', dataKey: 'category' },
+    { header: 'Employee\n(Group)', dataKey: 'group' },
+    { header: 'Worker\nRole', dataKey: 'name' },
     { header: 'Wage/Unit', dataKey: 'wage' },
     ...daysOfWeek.map((d) => ({
       header: `${d.dayName}\n${d.dateNumber}`,
@@ -59,6 +59,7 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
     let totalAdvance = 0;
 
     const rowObj = {
+      group: w.groupName || w.name,
       name: w.name,
       category: w.category || 'Worker',
       wage: `Rs. ${w.wage || 0}`
@@ -100,7 +101,8 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
 
   // Footer Row
   const footerRow = {
-    name: 'TOTAL',
+    group: 'TOTAL',
+    name: '',
     category: '',
     wage: '',
     advance: `Rs. ${grandTotalAdvance.toLocaleString('en-IN')}`,
@@ -109,12 +111,7 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
     balance: `Rs. ${grandTotalBalance.toLocaleString('en-IN')}`
   };
   daysOfWeek.forEach((day) => {
-    let dayWorkSum = 0;
-    masons.forEach((w) => {
-      const rec = (weekData[w.id] || {})[day.isoDate];
-      if (rec) dayWorkSum += (rec.attendance || 0);
-    });
-    footerRow[day.isoDate] = `${dayWorkSum}`;
+    footerRow[day.isoDate] = '';
   });
 
   // Generate AutoTable
@@ -152,13 +149,13 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
       fillColor: [248, 250, 252] // Zebra striping in PDF matching the app UI!
     },
     columnStyles: {
-      name: { fontStyle: 'bold', halign: 'left', minCellWidth: 70 },
-      category: { halign: 'left', minCellWidth: 50 },
-      wage: { halign: 'right', minCellWidth: 50 },
-      advance: { halign: 'right', minCellWidth: 50 },
-      totalWork: { halign: 'center', fontStyle: 'bold', minCellWidth: 40 },
-      totalAmount: { halign: 'right', fontStyle: 'bold', minCellWidth: 55 },
-      balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 60 }
+      group: { fontStyle: 'bold', halign: 'left', minCellWidth: 60 },
+      name: { halign: 'left', minCellWidth: 55 },
+      wage: { halign: 'right', minCellWidth: 45 },
+      advance: { halign: 'right', minCellWidth: 45 },
+      totalWork: { halign: 'center', fontStyle: 'bold', minCellWidth: 35 },
+      totalAmount: { halign: 'right', fontStyle: 'bold', minCellWidth: 50 },
+      balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 55 }
     },
     didDrawPage: (data) => {
       // Footer page number
@@ -166,7 +163,7 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        `Page ${data.pageNumber} of ${pageCount} - RDN Workers Attendance Management`,
+        `Page ${data.pageNumber} of ${pageCount} - RDN CREATORS Attendance Management`,
         doc.internal.pageSize.width / 2,
         doc.internal.pageSize.height - 15,
         { align: 'center' }
@@ -194,8 +191,8 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
   // Header Title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.setTextColor(15, 23, 42);
-  doc.text('RDN Civil Workers Monthly Attendance & Payroll', 40, 45);
+  doc.setTextColor(6, 78, 59);
+  doc.text('RDN CREATORS - Monthly Attendance & Payroll Report', 40, 45);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -204,8 +201,8 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
   doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 40, 80);
 
   const tableColumns = [
-    { header: 'Worker Name', dataKey: 'name' },
-    { header: 'Category', dataKey: 'category' },
+    { header: 'Employee\n(Group)', dataKey: 'group' },
+    { header: 'Worker / Role', dataKey: 'name' },
     { header: 'Wage/Unit\n(Rs.)', dataKey: 'wage' },
     { header: 'Days Worked\n(Units)', dataKey: 'daysWorked' },
     { header: 'Total Advance\n(Rs.)', dataKey: 'advance' },
@@ -247,6 +244,7 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
     grandTotalBalance += netBalance;
 
     return {
+      group: w.groupName || w.name,
       name: w.name,
       category: w.category || 'Worker',
       wage: `Rs. ${wage}`,
@@ -258,7 +256,8 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
   });
 
   const footerRow = {
-    name: 'TOTAL',
+    group: 'TOTAL',
+    name: '',
     category: '',
     wage: '',
     daysWorked: `${grandTotalWork}`,
@@ -272,7 +271,7 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
     body: tableRows,
     foot: [footerRow],
     startY: 95,
-    margin: { left: 40, right: 40, bottom: 40 },
+    margin: { left: 35, right: 35, bottom: 40 },
     theme: 'grid',
     styles: {
       font: 'helvetica',
@@ -301,13 +300,13 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
       fillColor: [248, 250, 252]
     },
     columnStyles: {
-      name: { fontStyle: 'bold', halign: 'left', minCellWidth: 85 },
-      category: { halign: 'left', minCellWidth: 65 },
-      wage: { halign: 'right', minCellWidth: 60 },
-      daysWorked: { halign: 'center', fontStyle: 'bold', minCellWidth: 55 },
-      advance: { halign: 'right', minCellWidth: 65 },
-      gross: { halign: 'right', fontStyle: 'bold', minCellWidth: 70 },
-      balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 75 }
+      group: { fontStyle: 'bold', halign: 'left', minCellWidth: 70 },
+      name: { halign: 'left', minCellWidth: 70 },
+      wage: { halign: 'right', minCellWidth: 50 },
+      daysWorked: { halign: 'center', fontStyle: 'bold', minCellWidth: 50 },
+      advance: { halign: 'right', minCellWidth: 60 },
+      gross: { halign: 'right', fontStyle: 'bold', minCellWidth: 65 },
+      balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 70 }
     },
     didDrawPage: (data) => {
       const pageCount = doc.internal.getNumberOfPages();

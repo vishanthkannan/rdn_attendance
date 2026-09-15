@@ -5,12 +5,12 @@ const STORAGE_KEY_ATTENDANCE = 'rdn_civil_attendance_v2';
 const STORAGE_KEY_CLOSED_WEEKS = 'rdn_civil_closed_weeks_v2';
 
 export const DEFAULT_INDIVIDUAL_WORKERS = [
-  { id: 'mason-suresh_mason', name: 'Suresh', category: 'Mason', wage: 950 },
-  { id: 'mason-suresh_mhelper', name: 'Murugan', category: 'M - Helper', wage: 600 },
-  { id: 'mason-suresh_fhelper', name: 'Valli', category: 'F - Helper', wage: 500 },
-  { id: 'mason-ramesh_mason', name: 'Ramesh', category: 'Mason', wage: 950 },
-  { id: 'mason-ramesh_mhelper', name: 'Mani', category: 'M - Helper', wage: 600 },
-  { id: 'mason-ramesh_fhelper', name: 'Selvi', category: 'F - Helper', wage: 500 }
+  { id: 'mason-suresh_mason', name: 'Manson', category: 'Manson', groupId: 'mason-suresh', groupName: 'Suresh', wage: 0 },
+  { id: 'mason-suresh_mhelper', name: 'M-Helper', category: 'M-Helper', groupId: 'mason-suresh', groupName: 'Suresh', wage: 0 },
+  { id: 'mason-suresh_fhelper', name: 'F-Helper', category: 'F-Helper', groupId: 'mason-suresh', groupName: 'Suresh', wage: 0 },
+  { id: 'mason-ramesh_mason', name: 'Manson', category: 'Manson', groupId: 'mason-ramesh', groupName: 'Ramesh', wage: 0 },
+  { id: 'mason-ramesh_mhelper', name: 'M-Helper', category: 'M-Helper', groupId: 'mason-ramesh', groupName: 'Ramesh', wage: 0 },
+  { id: 'mason-ramesh_fhelper', name: 'F-Helper', category: 'F-Helper', groupId: 'mason-ramesh', groupName: 'Ramesh', wage: 0 }
 ];
 
 export const DEFAULT_MASONS = DEFAULT_INDIVIDUAL_WORKERS;
@@ -20,42 +20,116 @@ export function normalizeToIndividualWorkers(items) {
   
   const workers = [];
   items.forEach((item) => {
-    // If it's already an individual worker object
-    if (item.category && item.wage !== undefined && !item.hasMHelper && !item.masonWage) {
-      workers.push(item);
+    const cleanWage = (item.wage !== undefined && item.wage !== 950 && item.wage !== 600 && item.wage !== 500) 
+      ? Number(item.wage) 
+      : 0;
+
+    // If it's Suresh or Ramesh from previous format, normalize names
+    if (item.id === 'mason-suresh_mason') {
+      workers.push({
+        id: item.id,
+        name: 'Manson',
+        category: 'Manson',
+        groupId: 'mason-suresh',
+        groupName: 'Suresh',
+        wage: cleanWage
+      });
+    } else if (item.id === 'mason-suresh_mhelper') {
+      workers.push({
+        id: item.id,
+        name: 'M-Helper',
+        category: 'M-Helper',
+        groupId: 'mason-suresh',
+        groupName: 'Suresh',
+        wage: cleanWage
+      });
+    } else if (item.id === 'mason-suresh_fhelper') {
+      workers.push({
+        id: item.id,
+        name: 'F-Helper',
+        category: 'F-Helper',
+        groupId: 'mason-suresh',
+        groupName: 'Suresh',
+        wage: cleanWage
+      });
+    } else if (item.id === 'mason-ramesh_mason') {
+      workers.push({
+        id: item.id,
+        name: 'Manson',
+        category: 'Manson',
+        groupId: 'mason-ramesh',
+        groupName: 'Ramesh',
+        wage: cleanWage
+      });
+    } else if (item.id === 'mason-ramesh_mhelper') {
+      workers.push({
+        id: item.id,
+        name: 'M-Helper',
+        category: 'M-Helper',
+        groupId: 'mason-ramesh',
+        groupName: 'Ramesh',
+        wage: cleanWage
+      });
+    } else if (item.id === 'mason-ramesh_fhelper') {
+      workers.push({
+        id: item.id,
+        name: 'F-Helper',
+        category: 'F-Helper',
+        groupId: 'mason-ramesh',
+        groupName: 'Ramesh',
+        wage: cleanWage
+      });
+    } else if (item.category && item.wage !== undefined && !item.hasMHelper && !item.masonWage) {
+      // Individual worker object
+      workers.push({
+        ...item,
+        groupId: item.groupId || item.id,
+        groupName: item.groupName || item.name,
+        wage: cleanWage
+      });
     } else {
-      // Grouped structure: convert each into individual worker
+      // Old grouped structure: convert each into individual worker
+      const gId = item.id || `group-${Date.now()}`;
+      const gName = item.name || 'Employee';
       if (item.name) {
         workers.push({
           id: item.id?.endsWith('_mason') ? item.id : `${item.id}_mason`,
-          name: item.name,
-          category: 'Mason',
-          wage: item.masonWage || 950
+          groupId: gId,
+          groupName: gName,
+          name: 'Manson',
+          category: 'Manson',
+          wage: (item.masonWage !== undefined && item.masonWage !== 950) ? Number(item.masonWage) : 0
         });
       }
       if (item.hasMHelper !== false) {
         workers.push({
           id: `${item.id}_mhelper`,
-          name: item.mHelperName || 'M - Helper',
-          category: 'M - Helper',
-          wage: item.mHelperWage || 600
+          groupId: gId,
+          groupName: gName,
+          name: 'M-Helper',
+          category: 'M-Helper',
+          wage: (item.mHelperWage !== undefined && item.mHelperWage !== 600) ? Number(item.mHelperWage) : 0
         });
       }
       if (item.hasFHelper !== false) {
         workers.push({
           id: `${item.id}_fhelper`,
-          name: item.fHelperName || 'F - Helper',
-          category: 'F - Helper',
-          wage: item.fHelperWage || 500
+          groupId: gId,
+          groupName: gName,
+          name: 'F-Helper',
+          category: 'F-Helper',
+          wage: (item.fHelperWage !== undefined && item.fHelperWage !== 500) ? Number(item.fHelperWage) : 0
         });
       }
       if (Array.isArray(item.customWorkers)) {
         item.customWorkers.forEach((cw) => {
           workers.push({
             id: `${item.id}_cw_${cw.id}`,
+            groupId: gId,
+            groupName: gName,
             name: cw.name,
             category: cw.category,
-            wage: cw.wage
+            wage: cw.wage || 0
           });
         });
       }

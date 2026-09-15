@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, HardHat, Check, Tag } from 'lucide-react';
 
 const CATEGORY_DEFAULT_WAGES = {
-  'Mason': 950,
-  'M - Helper': 600,
-  'F - Helper': 500,
-  'Other': 700
+  'Mason': 0,
+  'M - Helper': 0,
+  'F - Helper': 0,
+  'Other': 0
 };
 
 export default function AddWorkerModal({ 

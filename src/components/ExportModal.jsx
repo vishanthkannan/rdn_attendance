@@ -47,12 +47,12 @@ export default function ExportModal({
     const isClosed = closedWeeks.includes(selectedWeek);
     const lockStatus = isClosed ? 'CLOSED' : 'OPEN';
 
-    let csv = `Civil Workers Weekly Attendance Sheet\n`;
+    let csv = `RDN CREATORS - Civil Workers Weekly Attendance Sheet\n`;
     csv += `Week: ${rangeStr}\n`;
     csv += `Status: ${lockStatus}\n\n`;
 
     const dayHeaders = daysOfWeek.map((d) => `"${d.dayName} (${d.dateNumber})"`).join(',');
-    csv += `"Worker Name","Category","Wage Rate",${dayHeaders},"Advance (B)","Total Work","Total Amount","Balance to be Paid"\n`;
+    csv += `"Employee (Group)","Worker / Role","Wage Rate",${dayHeaders},"Advance (B)","Total Work","Total Amount","Balance to be Paid"\n`;
 
     const weekData = attendance[selectedWeek] || {};
 
@@ -75,7 +75,7 @@ export default function ExportModal({
       const totalAmount = totalWork * wage;
       const balance = totalAmount - totalAdvance;
 
-      csv += `"${w.name}","${w.category}",${wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
+      csv += `"${w.groupName || w.name}","${w.name}",${wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
     });
 
     const filename = `Civil_Weekly_Attendance_${selectedWeek}.csv`;
@@ -87,11 +87,11 @@ export default function ExportModal({
     const monthObj = availableMonths.find((m) => m.id === selectedMonth) || availableMonths[0];
     const monthPrefix = selectedMonth;
 
-    let csv = `Civil Workers Monthly Attendance & Payroll Consolidated Report\n`;
+    let csv = `RDN CREATORS - Civil Workers Monthly Attendance & Payroll Consolidated Report\n`;
     csv += `Month: ${monthObj.label}\n`;
     csv += `Total Workers: ${masons.length}\n\n`;
 
-    csv += `"Worker Name","Category","Wages per Work (₹)","Total Days/Units Worked","Total Advance Borrowed (₹)","Total Gross Wages (₹)","Net Balance to be Paid (₹)"\n`;
+    csv += `"Employee (Group)","Worker / Role","Wages per Work (₹)","Total Days/Units Worked","Total Advance Borrowed (₹)","Total Gross Wages (₹)","Net Balance to be Paid (₹)"\n`;
 
     masons.forEach((w) => {
       let totalWorkMonth = 0;
@@ -116,7 +116,7 @@ export default function ExportModal({
       const totalAmount = totalWorkMonth * wage;
       const netBalance = totalAmount - totalAdvanceMonth;
 
-      csv += `"${w.name}","${w.category}",${wage},${totalWorkMonth},${totalAdvanceMonth},${totalAmount},${netBalance}\n`;
+      csv += `"${w.groupName || w.name}","${w.name}",${wage},${totalWorkMonth},${totalAdvanceMonth},${totalAmount},${netBalance}\n`;
     });
 
     const filename = `Civil_Monthly_Attendance_${monthObj.label.replace(/\s+/g, '_')}.csv`;
@@ -206,17 +206,10 @@ export default function ExportModal({
               {/* PDF Card */}
               <div
                 onClick={() => setExportFormat('pdf')}
-                style={{
-                  border: exportFormat === 'pdf' ? '2px solid #dc2626' : '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0.75rem 0.75rem',
-                  cursor: 'pointer',
-                  background: exportFormat === 'pdf' ? '#fef2f2' : '#ffffff',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`export-card-option ${exportFormat === 'pdf' ? 'active-pdf' : ''}`}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.86rem', color: exportFormat === 'pdf' ? '#991b1b' : '#0f172a' }}>
+                  <span className="export-card-title" style={{ color: exportFormat === 'pdf' ? '#dc2626' : undefined }}>
                     <FileText size={16} color={exportFormat === 'pdf' ? '#dc2626' : '#64748b'} />
                     PDF Document
                   </span>
@@ -230,17 +223,10 @@ export default function ExportModal({
               {/* Excel / CSV Card */}
               <div
                 onClick={() => setExportFormat('csv')}
-                style={{
-                  border: exportFormat === 'csv' ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0.75rem 0.75rem',
-                  cursor: 'pointer',
-                  background: exportFormat === 'csv' ? '#f0fdf4' : '#ffffff',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`export-card-option ${exportFormat === 'csv' ? 'active-csv' : ''}`}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.86rem', color: exportFormat === 'csv' ? '#166534' : '#0f172a' }}>
+                  <span className="export-card-title" style={{ color: exportFormat === 'csv' ? '#16a34a' : undefined }}>
                     <FileSpreadsheet size={16} color={exportFormat === 'csv' ? '#16a34a' : '#64748b'} />
                     Excel Spreadsheet
                   </span>
@@ -255,24 +241,17 @@ export default function ExportModal({
 
           {/* 2. Report Period (Weekly vs Monthly) */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
               2. Select Report Period
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
               {/* Weekly Option */}
               <div
                 onClick={() => setReportType('weekly')}
-                style={{
-                  border: reportType === 'weekly' ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0.75rem 0.75rem',
-                  cursor: 'pointer',
-                  background: reportType === 'weekly' ? '#eff6ff' : '#ffffff',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`export-card-option ${reportType === 'weekly' ? 'active-blue' : ''}`}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.86rem', color: reportType === 'weekly' ? '#1e40af' : '#0f172a' }}>
+                  <span className="export-card-title" style={{ color: reportType === 'weekly' ? '#2563eb' : undefined }}>
                     <Calendar size={16} color={reportType === 'weekly' ? '#2563eb' : '#64748b'} />
                     Weekly Report
                   </span>
@@ -286,17 +265,10 @@ export default function ExportModal({
               {/* Monthly Option */}
               <div
                 onClick={() => setReportType('monthly')}
-                style={{
-                  border: reportType === 'monthly' ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0.75rem 0.75rem',
-                  cursor: 'pointer',
-                  background: reportType === 'monthly' ? '#eff6ff' : '#ffffff',
-                  transition: 'all 0.15s ease'
-                }}
+                className={`export-card-option ${reportType === 'monthly' ? 'active-blue' : ''}`}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.86rem', color: reportType === 'monthly' ? '#1e40af' : '#0f172a' }}>
+                  <span className="export-card-title" style={{ color: reportType === 'monthly' ? '#2563eb' : undefined }}>
                     <FileSpreadsheet size={16} color={reportType === 'monthly' ? '#2563eb' : '#64748b'} />
                     Monthly Report
                   </span>
@@ -310,24 +282,15 @@ export default function ExportModal({
           </div>
 
           {/* 3. Range Selector */}
-          <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.35rem' }}>
+          <div className="export-range-container">
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               {reportType === 'weekly' ? 'Target Week:' : 'Target Month:'}
             </label>
             {reportType === 'weekly' ? (
               <select
                 value={selectedWeek}
                 onChange={(e) => setSelectedWeek(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: '#0f172a'
-                }}
+                className="export-select-input"
               >
                 {PRESET_WEEKS.map((w) => (
                   <option key={w.id} value={w.id}>
@@ -339,16 +302,7 @@ export default function ExportModal({
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: '#0f172a'
-                }}
+                className="export-select-input"
               >
                 {availableMonths.map((m) => (
                   <option key={m.id} value={m.id}>

@@ -86,7 +86,7 @@ export default function WholeWeekModal({
           <div>
             <h3>Whole Week Attendance</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Set attendance &amp; advances for <strong>{worker.name}</strong> across all 7 days
+              Set attendance &amp; advances for <strong>{worker.groupName && worker.groupName !== worker.name ? `${worker.groupName} • ${worker.name}` : worker.name}</strong> across all 7 days
             </p>
           </div>
           <button 

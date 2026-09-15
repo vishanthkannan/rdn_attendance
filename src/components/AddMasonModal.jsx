@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import { X, HardHat, Check, Tag } from 'lucide-react';
-
-const CATEGORY_DEFAULT_WAGES = {
-  'Mason': 950,
-  'M - Helper': 600,
-  'F - Helper': 500,
-  'Other': 700
-};
+import { X, HardHat, Check, Users, IndianRupee } from 'lucide-react';
 
 export default function AddMasonModal({
   isOpen,
@@ -14,39 +7,33 @@ export default function AddMasonModal({
   onAddMason
 }) {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Mason');
-  const [otherCategory, setOtherCategory] = useState('');
+  const [masonWage, setMasonWage] = useState('0');
+  const [mHelperWage, setMHelperWage] = useState('0');
+  const [fHelperWage, setFHelperWage] = useState('0');
 
   if (!isOpen) return null;
-
-  const currentWage = CATEGORY_DEFAULT_WAGES[category] || 700;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    if (category === 'Other' && !otherCategory.trim()) {
-      alert('Please enter the name of the category');
-      return;
-    }
-
-    const finalCategory = category === 'Other' ? otherCategory.trim() : category;
-
     onAddMason({
       name: name.trim(),
-      category: finalCategory,
-      wage: currentWage
+      masonWage: Math.max(0, parseFloat(masonWage) || 0),
+      mHelperWage: Math.max(0, parseFloat(mHelperWage) || 0),
+      fHelperWage: Math.max(0, parseFloat(fHelperWage) || 0)
     });
 
     onClose();
     setName('');
-    setCategory('Mason');
-    setOtherCategory('');
+    setMasonWage('0');
+    setMHelperWage('0');
+    setFHelperWage('0');
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
         {/* Modal Header */}
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -55,6 +42,9 @@ export default function AddMasonModal({
             </div>
             <div>
               <h3>Add Employee</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Creates a group with 3 rows: Manson, M-Helper &amp; F-Helper
+              </p>
             </div>
           </div>
           <button
@@ -72,61 +62,99 @@ export default function AddMasonModal({
             {/* 1. Employee Name */}
             <div className="form-group">
               <label className="form-label" htmlFor="employee-name-input">
-                Employee Name *
+                Employee / Lead Name *
               </label>
               <input
                 id="employee-name-input"
                 type="text"
                 className="form-input"
                 required
-                placeholder="Enter employee name"
+                placeholder="e.g. Suresh, Ramesh, Kumar"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                This name will be displayed as the header above the group.
+              </span>
             </div>
 
-            {/* 2. Category Selection Dropdown: Mason, M - Helper, F - Helper, Other */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="category-select">
-                Category *
-              </label>
-              <select
-                id="category-select"
-                className="form-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="Mason">Mason</option>
-                <option value="M - Helper">M - Helper</option>
-                <option value="F - Helper">F - Helper</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            {/* 3. Dynamic Text Field if Other is Selected */}
-            {category === 'Other' && (
-              <div className="form-group" style={{ animation: 'fadeIn 0.2s ease-in' }}>
-                <label className="form-label" htmlFor="other-category-name">
-                  Specify Category Name *
+            {/* 2. Group Rows Preview & Wages */}
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                <Users size={15} color="var(--primary-600)" />
+                <label className="form-label" style={{ marginBottom: 0 }}>
+                  3 Rows in this Group (Default Wages per Work)
                 </label>
-                <div className="input-with-symbol" style={{ position: 'relative' }}>
-                  <span className="input-symbol">
-                    <Tag size={15} />
-                  </span>
-                  <input
-                    id="other-category-name"
-                    type="text"
-                    className="form-input"
-                    required
-                    placeholder="Enter category name"
-                    value={otherCategory}
-                    onChange={(e) => setOtherCategory(e.target.value)}
-                    autoFocus
-                  />
+              </div>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                background: 'var(--bg-surface-elevated, #f8fafc)',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md, 8px)',
+                border: '1px solid var(--border-subtle, #e2e8f0)'
+              }}>
+                {/* Row 1: Manson */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>Manson</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>₹</span>
+                    <input
+                      type="number"
+                      step="10"
+                      min="0"
+                      className="form-input tabular-nums"
+                      style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.84rem', textAlign: 'right' }}
+                      value={masonWage}
+                      onChange={(e) => setMasonWage(e.target.value)}
+                      title="Manson daily wage rate"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2: M-Helper */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>M-Helper</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>₹</span>
+                    <input
+                      type="number"
+                      step="10"
+                      min="0"
+                      className="form-input tabular-nums"
+                      style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.84rem', textAlign: 'right' }}
+                      value={mHelperWage}
+                      onChange={(e) => setMHelperWage(e.target.value)}
+                      title="M-Helper daily wage rate"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: F-Helper */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>F-Helper</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>₹</span>
+                    <input
+                      type="number"
+                      step="10"
+                      min="0"
+                      className="form-input tabular-nums"
+                      style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.84rem', textAlign: 'right' }}
+                      value={fHelperWage}
+                      onChange={(e) => setFHelperWage(e.target.value)}
+                      title="F-Helper daily wage rate"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Modal Footer */}
@@ -143,7 +171,7 @@ export default function AddMasonModal({
               className="btn btn-green"
             >
               <Check size={16} />
-              Add Employee
+              Add Employee (3 Rows)
             </button>
           </div>
         </form>
@@ -151,3 +179,4 @@ export default function AddMasonModal({
     </div>
   );
 }
+
