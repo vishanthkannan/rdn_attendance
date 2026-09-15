@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Calendar, FileSpreadsheet, FileText, X, CheckCircle2 } from 'lucide-react';
-import { PRESET_WEEKS, formatWeekRange } from '../utils/dateUtils';
+import { PRESET_WEEKS, formatWeekRange, getDaysInMonth } from '../utils/dateUtils';
 import { exportWeeklyPDF, exportMonthlyPDF } from '../utils/pdfExport';
 
 export default function ExportModal({
@@ -82,42 +82,73 @@ export default function ExportModal({
     triggerCSVDownload(csv, filename);
   };
 
-  // Generate Monthly CSV
+  // Generate Monthly CSV with all-day attendance (Day 1 to 30/31)
   const handleExportMonthlyCSV = () => {
     const monthObj = availableMonths.find((m) => m.id === selectedMonth) || availableMonths[0];
-    const monthPrefix = selectedMonth;
+    const monthDays = getDaysInMonth(selectedMonth);
 
-    let csv = `RDN CREATORS - Civil Workers Monthly Attendance & Payroll Consolidated Report\n`;
+    let csv = `RDN CREATORS - Civil Workers Monthly Attendance & Payroll Register\n`;
     csv += `Month: ${monthObj.label}\n`;
+    csv += `Total Days: ${monthDays.length}\n`;
     csv += `Total Workers: ${masons.length}\n\n`;
 
-    csv += `"Employee (Group)","Worker / Role","Wages per Work (₹)","Total Days/Units Worked","Total Advance Borrowed (₹)","Total Gross Wages (₹)","Net Balance to be Paid (₹)"\n`;
+    // Headers for all individual days of the month
+    const dayHeaders = monthDays.map((d) => `"${d.dateNumber} ${d.monthName} (${d.dayName})"`).join(',');
+    csv += `"Employee (Group)","Worker","Wage Rate (₹)",${dayHeaders},"Advance (₹)","Total Work","Total Amount (₹)","Balance to be Paid (₹)"\n`;
+
+    let grandTotalWork = 0;
+    let grandTotalAdvance = 0;
+    let grandTotalAmount = 0;
+    let grandTotalBalance = 0;
+    const dailyTotals = {};
+    monthDays.forEach((d) => { dailyTotals[d.isoDate] = 0; });
 
     masons.forEach((w) => {
       let totalWorkMonth = 0;
       let totalAdvanceMonth = 0;
 
-      Object.keys(attendance).forEach((weekKey) => {
-        const weekRows = attendance[weekKey] || {};
-        const workerRow = weekRows[w.id] || {};
+      const dayCols = monthDays.map((d) => {
+        let att = 0;
+        let bor = 0;
 
-        Object.keys(workerRow).forEach((dateStr) => {
-          if (dateStr.startsWith(monthPrefix)) {
-            const rec = workerRow[dateStr];
-            if (rec) {
-              totalWorkMonth += (rec.attendance || 0);
-              totalAdvanceMonth += (rec.borrowed || 0);
-            }
+        for (const weekKey of Object.keys(attendance)) {
+          const rec = attendance[weekKey]?.[w.id]?.[d.isoDate];
+          if (rec) {
+            att += (rec.attendance || 0);
+            bor += (rec.borrowed || 0);
           }
-        });
+        }
+
+        totalWorkMonth += att;
+        totalAdvanceMonth += bor;
+        dailyTotals[d.isoDate] += att;
+
+        if (att > 0 && bor > 0) {
+          return `"${att} (B: ₹${bor})"`;
+        } else if (att > 0) {
+          return `"${att}"`;
+        } else if (bor > 0) {
+          return `"B: ₹${bor}"`;
+        } else {
+          return '"0"';
+        }
       });
 
       const wage = w.wage || 0;
       const totalAmount = totalWorkMonth * wage;
       const netBalance = totalAmount - totalAdvanceMonth;
 
-      csv += `"${w.groupName || w.name}","${w.name}",${wage},${totalWorkMonth},${totalAdvanceMonth},${totalAmount},${netBalance}\n`;
+      grandTotalWork += totalWorkMonth;
+      grandTotalAdvance += totalAdvanceMonth;
+      grandTotalAmount += totalAmount;
+      grandTotalBalance += netBalance;
+
+      csv += `"${w.groupName || w.name}","${w.name}",${wage},${dayCols.join(',')},${totalAdvanceMonth},${totalWorkMonth},${totalAmount},${netBalance}\n`;
     });
+
+    // Grand total row across every day and payroll summary
+    const dailyTotalCols = monthDays.map((d) => `"${dailyTotals[d.isoDate]}"`).join(',');
+    csv += `"TOTAL","—",—,${dailyTotalCols},${grandTotalAdvance},${grandTotalWork},${grandTotalAmount},${grandTotalBalance}\n`;
 
     const filename = `Civil_Monthly_Attendance_${monthObj.label.replace(/\s+/g, '_')}.csv`;
     triggerCSVDownload(csv, filename);
@@ -275,7 +306,7 @@ export default function ExportModal({
                   {reportType === 'monthly' && <CheckCircle2 size={16} color="#2563eb" />}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  Consolidated monthly shifts, advances &amp; balance
+                  All-day attendance (Day 1-31) + advances &amp; balance
                 </div>
               </div>
             </div>

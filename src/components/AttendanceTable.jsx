@@ -137,15 +137,15 @@ export default function AttendanceTable({
                       <div className="mason-group-right">
                         <div className="group-summary-stats">
                           <span className="group-stat-item">
-                            Total: <strong style={{ color: 'var(--accent-amber, #d97706)' }}>₹{groupAmount.toLocaleString('en-IN')}</strong>
+                            Total: <strong className="group-stat-total-val">₹{groupAmount.toLocaleString('en-IN')}</strong>
                           </span>
                           <span className="group-stat-sep">•</span>
                           <span className="group-stat-item">
-                            Advance: <strong>₹{groupAdvance.toLocaleString('en-IN')}</strong>
+                            Advance: <strong className="group-stat-adv-val">₹{groupAdvance.toLocaleString('en-IN')}</strong>
                           </span>
                           <span className="group-stat-sep">•</span>
                           <span className="group-stat-item">
-                            Balance: <strong style={{ color: '#2563eb' }}>₹{groupBalance.toLocaleString('en-IN')}</strong>
+                            Balance: <strong className="group-stat-bal-val">₹{groupBalance.toLocaleString('en-IN')}</strong>
                           </span>
                         </div>
 

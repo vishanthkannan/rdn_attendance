@@ -20,6 +20,18 @@ import {
   saveClosedWeeks,
   resetAllData 
 } from './utils/storage';
+import { isSupabaseConfigured } from './utils/supabaseClient';
+import { 
+  fetchAllCloudData,
+  saveAttendanceCellCloud,
+  saveWholeWeekCloud,
+  addEmployeeGroupCloud,
+  updateWorkerWageCloud,
+  deleteWorkerCloud,
+  deleteGroupCloud,
+  toggleClosedWeekCloud,
+  syncLocalDataToSupabase
+} from './services/supabaseService';
 import { 
   Building2, 
   HardHat, 
@@ -31,7 +43,10 @@ import {
   Unlock,
   UserPlus,
   Sun,
-  Moon
+  Moon,
+  Cloud,
+  Database,
+  RefreshCw
 } from 'lucide-react';
 
 export default function App() {
@@ -94,6 +109,42 @@ export default function App() {
     }, 3000);
   };
 
+  // Cloud Sync State
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+
+  // Load from Supabase Cloud on initial mount (if credentials are set in .env)
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      setIsCloudSyncing(true);
+      fetchAllCloudData()
+        .then((cloudData) => {
+          if (cloudData) {
+            if (cloudData.masons && cloudData.masons.length > 0) setMasons(cloudData.masons);
+            if (cloudData.attendance !== undefined && cloudData.attendance !== null) setAttendance(cloudData.attendance);
+            if (cloudData.closedWeeks) setClosedWeeks(cloudData.closedWeeks);
+            showToast('Connected & synced with Supabase Cloud');
+          }
+        })
+        .catch((err) => console.warn('Supabase fetch failed:', err))
+        .finally(() => setIsCloudSyncing(false));
+    }
+  }, []);
+
+  // One-click helper to upload all current local state to Supabase
+  const handleSyncToCloud = async () => {
+    if (!isSupabaseConfigured) return;
+    setIsCloudSyncing(true);
+    try {
+      await syncLocalDataToSupabase(masons, attendance, closedWeeks);
+      showToast('Successfully synced all data to Supabase Cloud!');
+    } catch (err) {
+      console.error('Cloud sync error:', err);
+      showToast(err.message || 'Cloud sync failed');
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
   // Sync to localStorage
   useEffect(() => {
     saveMasons(masons);
@@ -135,11 +186,13 @@ export default function App() {
 
   // Toggle Week Close / Reopen
   const handleToggleCloseWeek = () => {
+    const nextClosed = !isCurrentWeekClosed;
     if (isCurrentWeekClosed) {
       setClosedWeeks((prev) => prev.filter((w) => w !== currentWeekStart));
     } else {
       setClosedWeeks((prev) => [...prev, currentWeekStart]);
     }
+    toggleClosedWeekCloud(currentWeekStart, nextClosed);
   };
 
   // Cell Click Handler
@@ -200,9 +253,25 @@ export default function App() {
       };
     });
 
+    // Cloud Sync
     if (applyToWholeWeek) {
+      const dayValues = {};
+      daysOfWeek.forEach((d) => {
+        dayValues[d.isoDate] = {
+          attendance: attVal,
+          borrowed: d.isoDate === dayInfo.isoDate ? borVal : (weekAttendance[worker.id]?.[d.isoDate]?.borrowed || 0)
+        };
+      });
+      saveWholeWeekCloud({ weekStart: currentWeekStart, workerId: worker.id, dayValues });
       showToast(`Applied ${attVal} attendance to all 7 days for ${worker.name}`);
     } else {
+      saveAttendanceCellCloud({
+        weekStart: currentWeekStart,
+        workerId: worker.id,
+        attendanceDate: dayInfo.isoDate,
+        attendance: attVal,
+        borrowed: borVal
+      });
       showToast(`Updated ${worker.name} on ${dayInfo.dayName}`);
     }
   };
@@ -229,6 +298,7 @@ export default function App() {
       };
     });
 
+    saveWholeWeekCloud({ weekStart: currentWeekStart, workerId: worker.id, dayValues });
     showToast(`Updated whole week attendance for ${worker.name}`);
   };
 
@@ -264,6 +334,7 @@ export default function App() {
     ];
 
     setMasons((prev) => [...prev, ...newWorkers]);
+    addEmployeeGroupCloud({ groupId, groupName, workers: newWorkers });
     showToast(`Added employee ${groupName} with 3 rows (Manson, M-Helper, F-Helper)`);
   };
 
@@ -273,6 +344,7 @@ export default function App() {
 
     if (window.confirm(`Delete ${workerName} row?`)) {
       setMasons((prev) => prev.filter((w) => w.id !== workerId));
+      deleteWorkerCloud(workerId);
       showToast(`Removed row ${workerName}`);
     }
   };
@@ -283,6 +355,7 @@ export default function App() {
 
     if (window.confirm(`Delete employee group "${groupName}" and all its rows?`)) {
       setMasons((prev) => prev.filter((w) => (w.groupId || w.id) !== groupId));
+      deleteGroupCloud(groupId);
       showToast(`Removed employee group ${groupName}`);
     }
   };
@@ -294,6 +367,7 @@ export default function App() {
     setMasons((prev) => 
       prev.map((w) => w.id === workerId ? { ...w, wage: parsedWage } : w)
     );
+    updateWorkerWageCloud(workerId, parsedWage);
   };
 
   // Export CSV Helper (with UTF-8 BOM for Excel compatibility)
@@ -349,19 +423,49 @@ export default function App() {
       {/* Top Navbar */}
       <header className="top-navbar">
         <div className="brand-badge">
-          <img 
-            src="/rdn_logo.png" 
-            alt="RDN CREATORS" 
-            className="brand-logo-img" 
-          />
+          <div className="brand-logo-frame">
+            <img 
+              src="/rdn_logo.png" 
+              alt="RDN CREATORS" 
+              className="brand-logo-img" 
+            />
+          </div>
           <div className="brand-divider" />
           <div className="brand-title-group">
-            <h1>RDN CREATORS</h1>
+            <div className="brand-title-row">
+              <h1>RDN CREATORS</h1>
+              <span className="brand-badge-tag">CIVIL REGISTER</span>
+            </div>
             <p>Workers Weekly Attendance &amp; Payroll</p>
           </div>
         </div>
 
         <div className="header-actions">
+          {/* Cloud Status / Connection Pill */}
+          {isSupabaseConfigured ? (
+            <div className="cloud-status-pill online" title="Live connection to Supabase PostgreSQL database">
+              <span className="cloud-dot online" />
+              <Cloud size={13} />
+              <span>Cloud Connected</span>
+              <button 
+                type="button" 
+                className="cloud-sync-btn"
+                onClick={handleSyncToCloud}
+                disabled={isCloudSyncing}
+                title="Sync local data to Supabase Cloud"
+                aria-label="Sync local data to Supabase Cloud"
+              >
+                <RefreshCw size={11} className={isCloudSyncing ? 'spinning' : ''} />
+              </button>
+            </div>
+          ) : (
+            <div className="cloud-status-pill offline" title="Currently in Local Mode. Add Supabase keys in .env to connect Cloud Database.">
+              <span className="cloud-dot offline" />
+              <Database size={13} />
+              <span>Local Mode</span>
+            </div>
+          )}
+
           {/* Black / Dark Theme Toggle Button */}
           <button
             type="button"
@@ -392,9 +496,9 @@ export default function App() {
             Export CSV
           </button>
 
-          {/* Add Employee Option */}
+          {/* Add Employee Option (Vibrant Green) */}
           <button 
-            className="btn btn-primary btn-sm"
+            className="btn btn-add-employee btn-sm"
             onClick={() => handleOpenAddWorker()}
             title="Add employee group (Manson, M - Helper, F - Helper) to roster"
           >

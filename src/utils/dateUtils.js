@@ -87,3 +87,33 @@ export function shiftWeek(startDateStr, weeksDelta) {
   d.setDate(d.getDate() + (weeksDelta * 7));
   return formatDateISO(d);
 }
+
+/**
+ * Generate all days for a given month (e.g. "2026-09")
+ */
+export function getDaysInMonth(yearMonthStr) {
+  const [y, m] = yearMonthStr.split('-').map(Number);
+  const totalDays = new Date(y, m, 0).getDate();
+  const days = [];
+  
+  for (let i = 1; i <= totalDays; i++) {
+    const d = new Date(y, m - 1, i);
+    const dateStr = formatDateISO(d);
+    const dayOfWeekIdx = (d.getDay() + 6) % 7; // 0=Mon, 6=Sun
+    const dayName = DAY_NAMES[dayOfWeekIdx];
+    const dateNumber = String(i).padStart(2, '0');
+    const monthName = MONTH_NAMES[m - 1];
+    
+    days.push({
+      dayNumber: i,
+      dayName,
+      dateNumber,
+      monthName,
+      isoDate: dateStr,
+      shortLabel: `${dayName} (${dateNumber})`,
+      pdfHeader: `${dateNumber}\n${dayName.slice(0, 2)}`
+    });
+  }
+  return days;
+}
+

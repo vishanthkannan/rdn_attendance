@@ -1,7 +1,7 @@
 // Storage and seed data management for Civil Worker Attendance (Clean Mason Structure)
 
 const STORAGE_KEY_MASONS = 'rdn_civil_masons_v2';
-const STORAGE_KEY_ATTENDANCE = 'rdn_civil_attendance_v2';
+const STORAGE_KEY_ATTENDANCE = 'rdn_civil_attendance_v3';
 const STORAGE_KEY_CLOSED_WEEKS = 'rdn_civil_closed_weeks_v2';
 
 export const DEFAULT_INDIVIDUAL_WORKERS = [
@@ -139,91 +139,7 @@ export function normalizeToIndividualWorkers(items) {
   return workers.length > 0 ? workers : DEFAULT_INDIVIDUAL_WORKERS;
 }
 
-export const DEFAULT_ATTENDANCE = {
-  // 08 Sep – 14 Sep 2026
-  '2026-09-08': {
-    // Suresh's team
-    'mason-suresh_mason': {
-      '2026-09-08': { attendance: 1, borrowed: 500 },
-      '2026-09-09': { attendance: 1, borrowed: 0 },
-      '2026-09-10': { attendance: 1, borrowed: 500 },
-      '2026-09-11': { attendance: 1, borrowed: 0 },
-      '2026-09-12': { attendance: 1, borrowed: 0 },
-      '2026-09-13': { attendance: 1, borrowed: 300 },
-      '2026-09-14': { attendance: 1, borrowed: 0 }
-    },
-    'mason-suresh_mhelper': {
-      '2026-09-08': { attendance: 4, borrowed: 500 }, // Example: 4 M-Helper, B = ₹500
-      '2026-09-09': { attendance: 4, borrowed: 0 },
-      '2026-09-10': { attendance: 4, borrowed: 800 },
-      '2026-09-11': { attendance: 3, borrowed: 0 },
-      '2026-09-12': { attendance: 4, borrowed: 400 },
-      '2026-09-13': { attendance: 4, borrowed: 0 },
-      '2026-09-14': { attendance: 2, borrowed: 0 }
-    },
-    'mason-suresh_fhelper': {
-      '2026-09-08': { attendance: 4, borrowed: 500 }, // Example: 4 F-Helper, B = ₹500
-      '2026-09-09': { attendance: 4, borrowed: 0 },
-      '2026-09-10': { attendance: 3, borrowed: 300 },
-      '2026-09-11': { attendance: 4, borrowed: 0 },
-      '2026-09-12': { attendance: 4, borrowed: 500 },
-      '2026-09-13': { attendance: 3, borrowed: 0 },
-      '2026-09-14': { attendance: 1, borrowed: 0 }
-    },
-
-    // Ramesh's team (Joined mid-week on 2026-09-10)
-    'mason-ramesh_mason': {
-      '2026-09-10': { attendance: 1, borrowed: 300 },
-      '2026-09-11': { attendance: 1, borrowed: 0 },
-      '2026-09-12': { attendance: 1, borrowed: 0 },
-      '2026-09-13': { attendance: 1, borrowed: 0 },
-      '2026-09-14': { attendance: 1, borrowed: 0 }
-    },
-    'mason-ramesh_mhelper': {
-      '2026-09-10': { attendance: 3, borrowed: 400 },
-      '2026-09-11': { attendance: 3, borrowed: 0 },
-      '2026-09-12': { attendance: 3, borrowed: 0 },
-      '2026-09-13': { attendance: 2, borrowed: 200 },
-      '2026-09-14': { attendance: 2, borrowed: 0 }
-    },
-    'mason-ramesh_fhelper': {
-      '2026-09-10': { attendance: 2, borrowed: 200 },
-      '2026-09-11': { attendance: 2, borrowed: 0 },
-      '2026-09-12': { attendance: 2, borrowed: 0 },
-      '2026-09-13': { attendance: 2, borrowed: 0 },
-      '2026-09-14': { attendance: 1, borrowed: 0 }
-    }
-  },
-  '2026-09-01': {
-    'mason-suresh_mason': {
-      '2026-09-01': { attendance: 1, borrowed: 200 },
-      '2026-09-02': { attendance: 1, borrowed: 0 },
-      '2026-09-03': { attendance: 1, borrowed: 0 },
-      '2026-09-04': { attendance: 1, borrowed: 400 },
-      '2026-09-05': { attendance: 1, borrowed: 0 },
-      '2026-09-06': { attendance: 1, borrowed: 0 },
-      '2026-09-07': { attendance: 1, borrowed: 0 }
-    },
-    'mason-suresh_mhelper': {
-      '2026-09-01': { attendance: 4, borrowed: 600 },
-      '2026-09-02': { attendance: 4, borrowed: 0 },
-      '2026-09-03': { attendance: 3, borrowed: 300 },
-      '2026-09-04': { attendance: 4, borrowed: 0 },
-      '2026-09-05': { attendance: 4, borrowed: 500 },
-      '2026-09-06': { attendance: 3, borrowed: 0 },
-      '2026-09-07': { attendance: 1, borrowed: 0 }
-    },
-    'mason-suresh_fhelper': {
-      '2026-09-01': { attendance: 3, borrowed: 400 },
-      '2026-09-02': { attendance: 3, borrowed: 0 },
-      '2026-09-03': { attendance: 3, borrowed: 0 },
-      '2026-09-04': { attendance: 3, borrowed: 300 },
-      '2026-09-05': { attendance: 3, borrowed: 0 },
-      '2026-09-06': { attendance: 2, borrowed: 0 },
-      '2026-09-07': { attendance: 0, borrowed: 0 }
-    }
-  }
-};
+export const DEFAULT_ATTENDANCE = {};
 
 export function loadMasons() {
   try {

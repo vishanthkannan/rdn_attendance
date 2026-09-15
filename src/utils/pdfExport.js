@@ -1,7 +1,7 @@
 // PDF Export Utility using jsPDF and jspdf-autotable
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatWeekRange } from './dateUtils';
+import { formatWeekRange, getDaysInMonth } from './dateUtils';
 
 /**
  * Export Weekly Attendance and Payroll as an openable, standard PDF file
@@ -180,58 +180,86 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
  */
 export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, attendance }) {
   const doc = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'pt',
     format: 'a4'
   });
 
   const monthObj = availableMonths.find((m) => m.id === selectedMonth) || availableMonths[0];
-  const monthPrefix = selectedMonth;
+  const monthDays = getDaysInMonth(selectedMonth);
 
   // Header Title
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(6, 78, 59);
-  doc.text('RDN CREATORS - Monthly Attendance & Payroll Report', 40, 45);
+  doc.setFontSize(14);
+  doc.setTextColor(6, 78, 59); // Forest emerald
+  doc.text('RDN CREATORS - Civil Workers Monthly Attendance & Payroll Register', 25, 30);
 
+  // Subtitle / Info Row
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(8.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`Month: ${monthObj.label}   |   Total Workers: ${masons.length}`, 40, 65);
-  doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 40, 80);
+  doc.text(`Month: ${monthObj.label}   |   Days: ${monthDays.length}   |   Total Workers: ${masons.length}`, 25, 45);
+  doc.text(`Exported on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 25, 57);
+
+  // Day columns across the month
+  const dayColumns = monthDays.map((d) => ({
+    header: `${d.dateNumber}\n${d.dayName.slice(0, 2)}`,
+    dataKey: d.isoDate
+  }));
 
   const tableColumns = [
     { header: 'Employee\n(Group)', dataKey: 'group' },
-    { header: 'Worker / Role', dataKey: 'name' },
-    { header: 'Wage/Unit\n(Rs.)', dataKey: 'wage' },
-    { header: 'Days Worked\n(Units)', dataKey: 'daysWorked' },
-    { header: 'Total Advance\n(Rs.)', dataKey: 'advance' },
-    { header: 'Gross Wages\n(Rs.)', dataKey: 'gross' },
-    { header: 'Balance to Pay\n(Rs.)', dataKey: 'balance' }
+    { header: 'Worker', dataKey: 'name' },
+    { header: 'Wage\n(Rs.)', dataKey: 'wage' },
+    ...dayColumns,
+    { header: 'Advance\n(Rs.)', dataKey: 'advance' },
+    { header: 'Total\nWork', dataKey: 'totalWork' },
+    { header: 'Gross\n(Rs.)', dataKey: 'gross' },
+    { header: 'Balance\n(Rs.)', dataKey: 'balance' }
   ];
 
   let grandTotalWork = 0;
   let grandTotalAdvance = 0;
   let grandTotalGross = 0;
   let grandTotalBalance = 0;
+  const dailyTotals = {};
+  monthDays.forEach((d) => { dailyTotals[d.isoDate] = 0; });
 
   const tableRows = masons.map((w) => {
     let totalWorkMonth = 0;
     let totalAdvanceMonth = 0;
 
-    Object.keys(attendance).forEach((weekKey) => {
-      const weekRows = attendance[weekKey] || {};
-      const workerRow = weekRows[w.id] || {};
+    const rowObj = {
+      group: w.groupName || w.name,
+      name: w.name,
+      wage: `${w.wage || 0}`
+    };
 
-      Object.keys(workerRow).forEach((dateStr) => {
-        if (dateStr.startsWith(monthPrefix)) {
-          const rec = workerRow[dateStr];
-          if (rec) {
-            totalWorkMonth += (rec.attendance || 0);
-            totalAdvanceMonth += (rec.borrowed || 0);
-          }
+    monthDays.forEach((d) => {
+      let att = 0;
+      let bor = 0;
+
+      for (const weekKey of Object.keys(attendance)) {
+        const rec = attendance[weekKey]?.[w.id]?.[d.isoDate];
+        if (rec) {
+          att += (rec.attendance || 0);
+          bor += (rec.borrowed || 0);
         }
-      });
+      }
+
+      totalWorkMonth += att;
+      totalAdvanceMonth += bor;
+      dailyTotals[d.isoDate] += att;
+
+      if (att > 0 && bor > 0) {
+        rowObj[d.isoDate] = `${att}\n(B:${bor})`;
+      } else if (att > 0) {
+        rowObj[d.isoDate] = `${att}`;
+      } else if (bor > 0) {
+        rowObj[d.isoDate] = `B:${bor}`;
+      } else {
+        rowObj[d.isoDate] = '0';
+      }
     });
 
     const wage = w.wage || 0;
@@ -243,79 +271,86 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
     grandTotalGross += totalAmount;
     grandTotalBalance += netBalance;
 
-    return {
-      group: w.groupName || w.name,
-      name: w.name,
-      category: w.category || 'Worker',
-      wage: `Rs. ${wage}`,
-      daysWorked: `${totalWorkMonth}`,
-      advance: `Rs. ${totalAdvanceMonth.toLocaleString('en-IN')}`,
-      gross: `Rs. ${totalAmount.toLocaleString('en-IN')}`,
-      balance: `Rs. ${netBalance.toLocaleString('en-IN')}`
-    };
+    rowObj.advance = `${totalAdvanceMonth.toLocaleString('en-IN')}`;
+    rowObj.totalWork = `${totalWorkMonth}`;
+    rowObj.gross = `${totalAmount.toLocaleString('en-IN')}`;
+    rowObj.balance = `${netBalance.toLocaleString('en-IN')}`;
+
+    return rowObj;
   });
 
+  // Footer Row
   const footerRow = {
     group: 'TOTAL',
-    name: '',
-    category: '',
-    wage: '',
-    daysWorked: `${grandTotalWork}`,
-    advance: `Rs. ${grandTotalAdvance.toLocaleString('en-IN')}`,
-    gross: `Rs. ${grandTotalGross.toLocaleString('en-IN')}`,
-    balance: `Rs. ${grandTotalBalance.toLocaleString('en-IN')}`
+    name: '—',
+    wage: '—',
+    advance: `${grandTotalAdvance.toLocaleString('en-IN')}`,
+    totalWork: `${grandTotalWork}`,
+    gross: `${grandTotalGross.toLocaleString('en-IN')}`,
+    balance: `${grandTotalBalance.toLocaleString('en-IN')}`
   };
+
+  monthDays.forEach((d) => {
+    footerRow[d.isoDate] = `${dailyTotals[d.isoDate]}`;
+  });
+
+  // Column style overrides
+  const columnStyles = {
+    group: { fontStyle: 'bold', halign: 'left', minCellWidth: 46 },
+    name: { halign: 'left', minCellWidth: 42 },
+    wage: { halign: 'right', minCellWidth: 26 },
+    advance: { halign: 'right', minCellWidth: 36 },
+    totalWork: { halign: 'center', fontStyle: 'bold', minCellWidth: 26 },
+    gross: { halign: 'right', fontStyle: 'bold', minCellWidth: 42 },
+    balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 44 }
+  };
+
+  monthDays.forEach((d) => {
+    columnStyles[d.isoDate] = { halign: 'center', minCellWidth: 15 };
+  });
 
   autoTable(doc, {
     columns: tableColumns,
     body: tableRows,
     foot: [footerRow],
-    startY: 95,
-    margin: { left: 35, right: 35, bottom: 40 },
+    startY: 68,
+    margin: { left: 15, right: 15, bottom: 25 },
     theme: 'grid',
     styles: {
       font: 'helvetica',
-      fontSize: 9,
-      cellPadding: 5,
+      fontSize: 6,
+      cellPadding: 1.5,
       valign: 'middle',
       textColor: [15, 23, 42],
       lineColor: [203, 213, 225],
-      lineWidth: 0.5
+      lineWidth: 0.4
     },
     headStyles: {
       fillColor: [15, 23, 42],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       halign: 'center',
-      fontSize: 9
+      fontSize: 6
     },
     footStyles: {
       fillColor: [241, 245, 249],
       textColor: [15, 23, 42],
       fontStyle: 'bold',
       halign: 'center',
-      fontSize: 9.5
+      fontSize: 6.5
     },
     alternateRowStyles: {
       fillColor: [248, 250, 252]
     },
-    columnStyles: {
-      group: { fontStyle: 'bold', halign: 'left', minCellWidth: 70 },
-      name: { halign: 'left', minCellWidth: 70 },
-      wage: { halign: 'right', minCellWidth: 50 },
-      daysWorked: { halign: 'center', fontStyle: 'bold', minCellWidth: 50 },
-      advance: { halign: 'right', minCellWidth: 60 },
-      gross: { halign: 'right', fontStyle: 'bold', minCellWidth: 65 },
-      balance: { halign: 'right', fontStyle: 'bold', minCellWidth: 70 }
-    },
+    columnStyles,
     didDrawPage: (data) => {
       const pageCount = doc.internal.getNumberOfPages();
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        `Page ${data.pageNumber} of ${pageCount} - RDN Workers Monthly Attendance & Payroll`,
+        `Page ${data.pageNumber} of ${pageCount} - RDN CREATORS Monthly Attendance & Payroll Register`,
         doc.internal.pageSize.width / 2,
-        doc.internal.pageSize.height - 20,
+        doc.internal.pageSize.height - 10,
         { align: 'center' }
       );
     }
