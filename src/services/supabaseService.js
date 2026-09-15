@@ -17,15 +17,47 @@ export async function fetchAllCloudData() {
     if (attendanceRes.error) throw attendanceRes.error;
     if (closedWeeksRes.error) throw closedWeeksRes.error;
 
-    // Transform workers
-    const masons = (workersRes.data || []).map((w) => ({
-      id: w.id,
-      groupId: w.group_id,
-      groupName: w.group_name,
-      name: w.name,
-      category: w.category,
-      wage: Number(w.wage) || 0
-    }));
+    // Transform workers (filter out old demo records for Suresh and Ramesh)
+    const masons = (workersRes.data || [])
+      .filter((w) => {
+        const gName = (w.group_name || '').trim().toLowerCase();
+        const gId = (w.group_id || '').toLowerCase();
+        const wId = (w.id || '').toLowerCase();
+        return (
+          gName !== 'suresh' && 
+          gName !== 'ramesh' && 
+          !gId.includes('suresh') && 
+          !gId.includes('ramesh') &&
+          !wId.includes('suresh') &&
+          !wId.includes('ramesh')
+        );
+      })
+      .map((w) => ({
+        id: w.id,
+        groupId: w.group_id,
+        groupName: w.group_name,
+        name: w.name,
+        category: w.category,
+        wage: Number(w.wage) || 0
+      }));
+
+    // Asynchronously purge any old Suresh & Ramesh demo entries from Supabase
+    const demoMatches = (workersRes.data || []).filter((w) => {
+      const gName = (w.group_name || '').trim().toLowerCase();
+      const gId = (w.group_id || '').toLowerCase();
+      return gName === 'suresh' || gName === 'ramesh' || gId.includes('suresh') || gId.includes('ramesh');
+    });
+    if (demoMatches.length > 0) {
+      demoMatches.forEach(async (dw) => {
+        try {
+          await supabase.from('daily_attendance').delete().eq('worker_id', dw.id);
+          await supabase.from('workers').delete().eq('id', dw.id);
+          if (dw.group_id) {
+            await supabase.from('worker_groups').delete().eq('id', dw.group_id);
+          }
+        } catch (_) {}
+      });
+    }
 
     // Transform attendance into { [weekKey]: { [workerId]: { [date]: { attendance, borrowed } } } }
     const attendance = {};
@@ -46,8 +78,8 @@ export async function fetchAllCloudData() {
     const closedWeeks = (closedWeeksRes.data || []).map((cw) => cw.week_id);
 
     return {
-      masons: masons.length > 0 ? masons : null,
-      attendance: attendance,
+      masons,
+      attendance,
       closedWeeks
     };
   } catch (err) {
@@ -168,6 +200,13 @@ export async function deleteWorkerCloud(workerId) {
   if (!isSupabaseConfigured || !supabase) return;
 
   try {
+    // Delete attendance rows first
+    await supabase
+      .from('daily_attendance')
+      .delete()
+      .eq('worker_id', workerId);
+
+    // Delete worker record
     const { error } = await supabase
       .from('workers')
       .delete()
@@ -186,6 +225,28 @@ export async function deleteGroupCloud(groupId) {
   if (!isSupabaseConfigured || !supabase) return;
 
   try {
+    // 1. Find all workers in this group
+    const { data: groupWorkers } = await supabase
+      .from('workers')
+      .select('id')
+      .eq('group_id', groupId);
+
+    if (groupWorkers && groupWorkers.length > 0) {
+      const workerIds = groupWorkers.map((w) => w.id);
+      // Delete daily attendance for all workers in group
+      await supabase
+        .from('daily_attendance')
+        .delete()
+        .in('worker_id', workerIds);
+    }
+
+    // 2. Delete all workers in group
+    await supabase
+      .from('workers')
+      .delete()
+      .eq('group_id', groupId);
+
+    // 3. Delete the group itself
     const { error } = await supabase
       .from('worker_groups')
       .delete()

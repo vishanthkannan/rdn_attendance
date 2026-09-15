@@ -109,7 +109,18 @@ export default function AttendanceTable({
           </tr>
         </thead>
         <tbody>
-          {groupedWorkers.map((group) => {
+          {groupedWorkers.length === 0 ? (
+            <tr>
+              <td colSpan={daysOfWeek.length + 6} style={{ textAlign: 'center', padding: '3.5rem 1rem', color: '#64748b' }}>
+                <HardHat size={36} style={{ margin: '0 auto 0.6rem', opacity: 0.35, display: 'block' }} />
+                <div style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--text-primary)' }}>No employees registered yet</div>
+                <div style={{ fontSize: '0.82rem', marginTop: '0.3rem', color: 'var(--text-secondary)' }}>
+                  Click <strong>&quot;+ Add Employee&quot;</strong> in the top bar to add your worker groups.
+                </div>
+              </td>
+            </tr>
+          ) : (
+            groupedWorkers.map((group) => {
             let groupAdvance = 0;
             let groupAmount = 0;
             let groupBalance = 0;
@@ -273,8 +284,9 @@ export default function AttendanceTable({
                 })}
               </React.Fragment>
             );
-          })}
-        </tbody>
+          })
+        )}
+      </tbody>
 
         {/* Footer Totals Row */}
         <tfoot>

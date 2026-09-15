@@ -119,7 +119,10 @@ export default function App() {
       fetchAllCloudData()
         .then((cloudData) => {
           if (cloudData) {
-            if (cloudData.masons && cloudData.masons.length > 0) setMasons(cloudData.masons);
+            if (Array.isArray(cloudData.masons)) {
+              setMasons(cloudData.masons);
+              saveMasons(cloudData.masons);
+            }
             if (cloudData.attendance !== undefined && cloudData.attendance !== null) setAttendance(cloudData.attendance);
             if (cloudData.closedWeeks) setClosedWeeks(cloudData.closedWeeks);
             showToast('Connected & synced with Supabase Cloud');
@@ -343,7 +346,11 @@ export default function App() {
     if (isCurrentWeekClosed) return;
 
     if (window.confirm(`Delete ${workerName} row?`)) {
-      setMasons((prev) => prev.filter((w) => w.id !== workerId));
+      setMasons((prev) => {
+        const remaining = prev.filter((w) => w.id !== workerId);
+        saveMasons(remaining);
+        return remaining;
+      });
       deleteWorkerCloud(workerId);
       showToast(`Removed row ${workerName}`);
     }
@@ -354,7 +361,11 @@ export default function App() {
     if (isCurrentWeekClosed) return;
 
     if (window.confirm(`Delete employee group "${groupName}" and all its rows?`)) {
-      setMasons((prev) => prev.filter((w) => (w.groupId || w.id) !== groupId));
+      setMasons((prev) => {
+        const remaining = prev.filter((w) => (w.groupId || w.id) !== groupId);
+        saveMasons(remaining);
+        return remaining;
+      });
       deleteGroupCloud(groupId);
       showToast(`Removed employee group ${groupName}`);
     }
