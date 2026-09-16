@@ -246,9 +246,6 @@ export default function ExportModal({
                   </span>
                   {exportFormat === 'pdf' && <CheckCircle2 size={16} color="#dc2626" />}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  Standard openable PDF, formatted for print &amp; sharing
-                </div>
               </div>
 
               {/* Excel / CSV Card */}
@@ -262,9 +259,6 @@ export default function ExportModal({
                     Excel Spreadsheet
                   </span>
                   {exportFormat === 'csv' && <CheckCircle2 size={16} color="#16a34a" />}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  CSV spreadsheet for Excel, Google Sheets
                 </div>
               </div>
             </div>
@@ -288,9 +282,6 @@ export default function ExportModal({
                   </span>
                   {reportType === 'weekly' && <CheckCircle2 size={16} color="#2563eb" />}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  Mon-Sun daily breakdown + borrow advances
-                </div>
               </div>
 
               {/* Monthly Option */}
@@ -304,9 +295,6 @@ export default function ExportModal({
                     Monthly Report
                   </span>
                   {reportType === 'monthly' && <CheckCircle2 size={16} color="#2563eb" />}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                  All-day attendance (Day 1-31) + advances &amp; balance
                 </div>
               </div>
             </div>

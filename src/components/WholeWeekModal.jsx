@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Calendar, Zap, IndianRupee, Banknote, Plus } from 'lucide-react';
+import { X, Check, Zap, Plus } from 'lucide-react';
 
 export default function WholeWeekModal({
   isOpen,
@@ -7,7 +7,8 @@ export default function WholeWeekModal({
   worker,
   daysOfWeek,
   currentWeekAttendance,
-  onSaveWholeWeek
+  onSaveWholeWeek,
+  isOnline = true
 }) {
   // State for all 7 days: { [isoDate]: { attendance: number, borrowed: number } }
   const [dayValues, setDayValues] = useState({});
@@ -72,6 +73,10 @@ export default function WholeWeekModal({
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      return;
+    }
     onSaveWholeWeek(worker, dayValues);
     onClose();
   };
@@ -101,6 +106,13 @@ export default function WholeWeekModal({
         {/* Modal Body */}
         <form onSubmit={handleSave}>
           <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+            {!isOnline && (
+              <div className="modal-offline-warning" role="alert">
+                <span>⚠️</span>
+                <span><strong>Attendance is not saved!</strong> You are currently offline. Please reconnect to the internet.</span>
+              </div>
+            )}
+
             {/* Quick Fill Box */}
             <div style={{
               background: 'var(--bg-surface-elevated)',

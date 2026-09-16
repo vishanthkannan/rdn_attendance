@@ -17,47 +17,15 @@ export async function fetchAllCloudData() {
     if (attendanceRes.error) throw attendanceRes.error;
     if (closedWeeksRes.error) throw closedWeeksRes.error;
 
-    // Transform workers (filter out old demo records for Suresh and Ramesh)
-    const masons = (workersRes.data || [])
-      .filter((w) => {
-        const gName = (w.group_name || '').trim().toLowerCase();
-        const gId = (w.group_id || '').toLowerCase();
-        const wId = (w.id || '').toLowerCase();
-        return (
-          gName !== 'suresh' && 
-          gName !== 'ramesh' && 
-          !gId.includes('suresh') && 
-          !gId.includes('ramesh') &&
-          !wId.includes('suresh') &&
-          !wId.includes('ramesh')
-        );
-      })
-      .map((w) => ({
-        id: w.id,
-        groupId: w.group_id,
-        groupName: w.group_name,
-        name: w.name,
-        category: w.category,
-        wage: Number(w.wage) || 0
-      }));
-
-    // Asynchronously purge any old Suresh & Ramesh demo entries from Supabase
-    const demoMatches = (workersRes.data || []).filter((w) => {
-      const gName = (w.group_name || '').trim().toLowerCase();
-      const gId = (w.group_id || '').toLowerCase();
-      return gName === 'suresh' || gName === 'ramesh' || gId.includes('suresh') || gId.includes('ramesh');
-    });
-    if (demoMatches.length > 0) {
-      demoMatches.forEach(async (dw) => {
-        try {
-          await supabase.from('daily_attendance').delete().eq('worker_id', dw.id);
-          await supabase.from('workers').delete().eq('id', dw.id);
-          if (dw.group_id) {
-            await supabase.from('worker_groups').delete().eq('id', dw.group_id);
-          }
-        } catch (_) {}
-      });
-    }
+    // Transform workers
+    const masons = (workersRes.data || []).map((w) => ({
+      id: w.id,
+      groupId: w.group_id,
+      groupName: w.group_name,
+      name: w.name,
+      category: w.category,
+      wage: Number(w.wage) || 0
+    }));
 
     // Transform attendance into { [weekKey]: { [workerId]: { [date]: { attendance, borrowed } } } }
     const attendance = {};
@@ -357,3 +325,60 @@ export async function syncLocalDataToSupabase(masons, attendance, closedWeeks) {
 
   return { success: true };
 }
+
+/**
+ * Subscribe to realtime changes across workers, daily_attendance, worker_groups, and closed_weeks tables.
+ * Enables instant multi-device live sync without requiring page refreshes.
+ * Returns a cleanup function that unsubscribes when called.
+ */
+export function subscribeToRealtimeChanges({
+  onAttendanceChange,
+  onWorkerChange,
+  onGroupChange,
+  onClosedWeekChange
+}) {
+  if (!isSupabaseConfigured || !supabase) return () => {};
+
+  const channel = supabase
+    .channel('rdn-attendance-realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'daily_attendance' },
+      (payload) => {
+        if (onAttendanceChange) onAttendanceChange(payload);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'workers' },
+      (payload) => {
+        if (onWorkerChange) onWorkerChange(payload);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'worker_groups' },
+      (payload) => {
+        if (onGroupChange) onGroupChange(payload);
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'closed_weeks' },
+      (payload) => {
+        if (onClosedWeekChange) onClosedWeekChange(payload);
+      }
+    )
+    .subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[Realtime] Subscribed to live database changes');
+      } else if (status === 'CHANNEL_ERROR') {
+        console.warn('[Realtime] Channel error:', err);
+      }
+    });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+

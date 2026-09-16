@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, HardHat, Check, Users, IndianRupee } from 'lucide-react';
+import { X, HardHat, Check, Users } from 'lucide-react';
 
 export default function AddMasonModal({
   isOpen,
@@ -43,7 +43,7 @@ export default function AddMasonModal({
             <div>
               <h3>Add Employee</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Creates a group with 3 rows: Manson, M-Helper &amp; F-Helper
+                Creates a group
               </p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function AddMasonModal({
                 type="text"
                 className="form-input"
                 required
-                placeholder="e.g. Suresh, Ramesh, Kumar"
+                placeholder="Mason or Employee name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus

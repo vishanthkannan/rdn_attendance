@@ -1,4 +1,4 @@
-// Storage and seed data management for Civil Worker Attendance (Clean Mason Structure)
+// Storage management for Civil Worker Attendance (Clean Mason Structure)
 
 const STORAGE_KEY_MASONS = 'rdn_civil_masons_v2';
 const STORAGE_KEY_ATTENDANCE = 'rdn_civil_attendance_v3';
@@ -12,18 +12,6 @@ export function normalizeToIndividualWorkers(items) {
   
   const workers = [];
   items.forEach((item) => {
-    // Purge old demo workers (Suresh / Ramesh)
-    const gName = (item.groupName || item.name || '').trim().toLowerCase();
-    const gId = (item.groupId || item.id || '').toLowerCase();
-    if (
-      gName === 'suresh' || 
-      gName === 'ramesh' || 
-      gId.includes('suresh') || 
-      gId.includes('ramesh')
-    ) {
-      return;
-    }
-
     const cleanWage = Number(item.wage) || 0;
 
     if (item.category && item.wage !== undefined && !item.hasMHelper && !item.masonWage) {

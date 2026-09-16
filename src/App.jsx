@@ -3,12 +3,10 @@ import WeekHeader from './components/WeekHeader';
 import AttendanceTable from './components/AttendanceTable';
 import CellEditorModal from './components/CellEditorModal';
 import AddMasonModal from './components/AddMasonModal';
-import AddWorkerModal from './components/AddWorkerModal';
 import WholeWeekModal from './components/WholeWeekModal';
 import ExportModal from './components/ExportModal';
 import { 
   getDaysOfWeek, 
-  formatWeekRange, 
   CURRENT_WEEK_ID 
 } from './utils/dateUtils';
 import { 
@@ -17,8 +15,7 @@ import {
   loadAttendance, 
   saveAttendance, 
   loadClosedWeeks,
-  saveClosedWeeks,
-  resetAllData 
+  saveClosedWeeks
 } from './utils/storage';
 import { isSupabaseConfigured } from './utils/supabaseClient';
 import { 
@@ -30,38 +27,33 @@ import {
   deleteWorkerCloud,
   deleteGroupCloud,
   toggleClosedWeekCloud,
-  syncLocalDataToSupabase
+  subscribeToRealtimeChanges
 } from './services/supabaseService';
 import { 
-  Building2, 
-  HardHat, 
   Download, 
-  RotateCcw, 
   Check, 
   Search,
   Lock,
   Unlock,
   UserPlus,
-  Sun,
-  Moon,
-  Cloud,
-  Database,
-  RefreshCw
+  X
 } from 'lucide-react';
 
 export default function App() {
-  // Theme State (Persisted in localStorage: 'light' or 'dark')
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('rdn_theme') || 'light';
-  });
-
+  // Ensure light mode is always active and clear any saved dark theme
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('rdn_theme', theme);
-  }, [theme]);
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('rdn_theme');
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  // Toast feedback
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
   };
 
   // Active Week State (Defaults to 08 Sep - 14 Sep 2026)
@@ -85,37 +77,48 @@ export default function App() {
     worker: null
   });
 
-  const [isAddMasonOpen, setIsAddMasonOpen] = useState(false);
   const [isAddWorkerOpen, setIsAddWorkerOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [targetMasonIdForWorker, setTargetMasonIdForWorker] = useState(null);
 
-  const handleOpenAddWorker = (masonId = null) => {
+  // Online / Offline Detection
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      showToast('🟢 Attendance is live');
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      showToast('🔴 You are offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleOpenAddWorker = () => {
     if (isCurrentWeekClosed) return;
-    setTargetMasonIdForWorker(masonId);
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to add employees.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
     setIsAddWorkerOpen(true);
   };
 
   // Search Filter
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Toast feedback
-  const [toastMessage, setToastMessage] = useState(null);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3000);
-  };
-
-  // Cloud Sync State
-  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
-
   // Load from Supabase Cloud on initial mount (if credentials are set in .env)
   useEffect(() => {
     if (isSupabaseConfigured) {
-      setIsCloudSyncing(true);
       fetchAllCloudData()
         .then((cloudData) => {
           if (cloudData) {
@@ -128,25 +131,129 @@ export default function App() {
             showToast('Connected & synced with Supabase Cloud');
           }
         })
-        .catch((err) => console.warn('Supabase fetch failed:', err))
-        .finally(() => setIsCloudSyncing(false));
+        .catch((err) => console.warn('Supabase fetch failed:', err));
     }
   }, []);
 
-  // One-click helper to upload all current local state to Supabase
-  const handleSyncToCloud = async () => {
+  // Live Real-Time Multi-Device Sync: updates state instantly when another phone/computer makes changes
+  useEffect(() => {
     if (!isSupabaseConfigured) return;
-    setIsCloudSyncing(true);
-    try {
-      await syncLocalDataToSupabase(masons, attendance, closedWeeks);
-      showToast('Successfully synced all data to Supabase Cloud!');
-    } catch (err) {
-      console.error('Cloud sync error:', err);
-      showToast(err.message || 'Cloud sync failed');
-    } finally {
-      setIsCloudSyncing(false);
-    }
-  };
+
+    const unsubscribe = subscribeToRealtimeChanges({
+      onAttendanceChange: (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const row = payload.new;
+          if (!row || !row.worker_id || !row.attendance_date) return;
+          const weekKey = row.week_start;
+          const workerId = row.worker_id;
+          const dateStr = row.attendance_date;
+          const newAtt = Number(row.attendance) || 0;
+          const newBor = Number(row.borrowed) || 0;
+
+          setAttendance((prev) => {
+            const prevWeek = prev[weekKey] || {};
+            const prevWorker = prevWeek[workerId] || {};
+            const existing = prevWorker[dateStr];
+            if (existing && existing.attendance === newAtt && existing.borrowed === newBor) {
+              return prev;
+            }
+            return {
+              ...prev,
+              [weekKey]: {
+                ...prevWeek,
+                [workerId]: {
+                  ...prevWorker,
+                  [dateStr]: {
+                    attendance: newAtt,
+                    borrowed: newBor
+                  }
+                }
+              }
+            };
+          });
+        } else if (payload.eventType === 'DELETE') {
+          const old = payload.old;
+          if (!old || !old.worker_id || !old.attendance_date) return;
+          const weekKey = old.week_start;
+          const workerId = old.worker_id;
+          const dateStr = old.attendance_date;
+
+          setAttendance((prev) => {
+            if (!prev[weekKey]?.[workerId]?.[dateStr]) return prev;
+            const updatedWorker = { ...prev[weekKey][workerId] };
+            delete updatedWorker[dateStr];
+            return {
+              ...prev,
+              [weekKey]: {
+                ...prev[weekKey],
+                [workerId]: updatedWorker
+              }
+            };
+          });
+        }
+      },
+      onWorkerChange: (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          const w = payload.new;
+          if (!w || !w.id) return;
+          const updatedWorker = {
+            id: w.id,
+            groupId: w.group_id,
+            groupName: w.group_name,
+            name: w.name,
+            category: w.category,
+            wage: Number(w.wage) || 0
+          };
+          setMasons((prev) => {
+            const index = prev.findIndex((m) => m.id === w.id);
+            if (index >= 0) {
+              const current = prev[index];
+              if (
+                current.wage === updatedWorker.wage &&
+                current.name === updatedWorker.name &&
+                current.groupName === updatedWorker.groupName &&
+                current.category === updatedWorker.category
+              ) {
+                return prev;
+              }
+              const next = [...prev];
+              next[index] = updatedWorker;
+              return next;
+            }
+            return [...prev, updatedWorker];
+          });
+        } else if (payload.eventType === 'DELETE') {
+          const oldId = payload.old?.id;
+          if (oldId) {
+            setMasons((prev) => prev.filter((m) => m.id !== oldId));
+          }
+        }
+      },
+      onGroupChange: (payload) => {
+        if (payload.eventType === 'DELETE' && payload.old?.id) {
+          const groupId = payload.old.id;
+          setMasons((prev) => prev.filter((m) => m.groupId !== groupId));
+        }
+      },
+      onClosedWeekChange: (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const weekId = payload.new?.week_id;
+          if (weekId) {
+            setClosedWeeks((prev) => (prev.includes(weekId) ? prev : [...prev, weekId]));
+          }
+        } else if (payload.eventType === 'DELETE') {
+          const weekId = payload.old?.week_id;
+          if (weekId) {
+            setClosedWeeks((prev) => prev.filter((w) => w !== weekId));
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, []);
 
   // Sync to localStorage
   useEffect(() => {
@@ -189,6 +296,11 @@ export default function App() {
 
   // Toggle Week Close / Reopen
   const handleToggleCloseWeek = () => {
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      showToast('⚠️ You are offline.');
+      return;
+    }
     const nextClosed = !isCurrentWeekClosed;
     if (isCurrentWeekClosed) {
       setClosedWeeks((prev) => prev.filter((w) => w !== currentWeekStart));
@@ -201,6 +313,11 @@ export default function App() {
   // Cell Click Handler
   const handleCellClick = (worker, dayInfo, currentData) => {
     if (isCurrentWeekClosed) return;
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to mark attendance.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
     setCellModalState({
       isOpen: true,
       worker,
@@ -212,6 +329,11 @@ export default function App() {
   // Open Whole Week Attendance Modal
   const handleOpenWholeWeek = (worker) => {
     if (isCurrentWeekClosed) return;
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to mark attendance.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
     setWholeWeekModalState({
       isOpen: true,
       worker
@@ -222,6 +344,12 @@ export default function App() {
   const handleSaveCell = ({ attendance: attVal, borrowed: borVal, applyToWholeWeek }) => {
     const { worker, dayInfo } = cellModalState;
     if (!worker || !dayInfo || isCurrentWeekClosed) return;
+
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to mark attendance.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
 
     setAttendance((prev) => {
       const prevWeek = prev[currentWeekStart] || {};
@@ -283,6 +411,12 @@ export default function App() {
   const handleSaveWholeWeek = (worker, dayValues) => {
     if (isCurrentWeekClosed) return;
 
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to mark attendance.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
+
     setAttendance((prev) => {
       const prevWeek = prev[currentWeekStart] || {};
       const prevRow = prevWeek[worker.id] || {};
@@ -307,6 +441,11 @@ export default function App() {
 
   // Add Employee Handler (Adds 3 rows: Manson, M-Helper, F-Helper grouped by entered name)
   const handleAddEmployee = ({ name, masonWage, mHelperWage, fHelperWage }) => {
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet to add employees.');
+      showToast('⚠️ Attendance is not saved! You are offline.');
+      return;
+    }
     const groupName = name.trim();
     const groupId = `group-${Date.now()}`;
     const newWorkers = [
@@ -344,6 +483,11 @@ export default function App() {
   // Delete Individual Worker Row
   const handleDeleteWorker = (workerId, workerName) => {
     if (isCurrentWeekClosed) return;
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      showToast('⚠️ You are offline.');
+      return;
+    }
 
     if (window.confirm(`Delete ${workerName} row?`)) {
       setMasons((prev) => {
@@ -359,6 +503,11 @@ export default function App() {
   // Delete Entire Employee Group
   const handleDeleteGroup = (groupId, groupName) => {
     if (isCurrentWeekClosed) return;
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      showToast('⚠️ You are offline.');
+      return;
+    }
 
     if (window.confirm(`Delete employee group "${groupName}" and all its rows?`)) {
       setMasons((prev) => {
@@ -374,6 +523,11 @@ export default function App() {
   // Update Worker Wage per Work
   const handleUpdateWorkerWage = (workerId, newWage) => {
     if (isCurrentWeekClosed) return;
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      showToast('⚠️ You are offline.');
+      return;
+    }
     const parsedWage = Math.max(0, parseFloat(newWage) || 0);
     setMasons((prev) => 
       prev.map((w) => w.id === workerId ? { ...w, wage: parsedWage } : w)
@@ -381,48 +535,6 @@ export default function App() {
     updateWorkerWageCloud(workerId, parsedWage);
   };
 
-  // Export CSV Helper (with UTF-8 BOM for Excel compatibility)
-  const handleExportCSV = () => {
-    const rangeStr = formatWeekRange(currentWeekStart).replace(/–/g, '-');
-    const lockStatus = isCurrentWeekClosed ? 'CLOSED / LOCKED' : 'ACTIVE / OPEN';
-    let csv = `RDN CREATORS - Civil Workers Weekly Attendance Sheet\nWeek: ${rangeStr}\nStatus: ${lockStatus}\n\n`;
-    
-    // Headers
-    const dayHeaders = daysOfWeek.map((d) => `"${d.dayName} (${d.dateNumber})"`).join(',');
-    csv += `"Employee Group","Worker / Role","Wage Rate",${dayHeaders},"Advance (B)","Total Work","Total Amount","Balance to be Paid"\n`;
-
-    masons.forEach((w) => {
-      const rowAtt = weekAttendance[w.id] || {};
-      let totalWork = 0;
-      let totalAdvance = 0;
-
-      const dayCols = daysOfWeek.map((day) => {
-        const rec = rowAtt[day.isoDate];
-        if (!rec) return '"0"';
-        const att = rec.attendance || 0;
-        const bor = rec.borrowed || 0;
-        totalWork += att;
-        totalAdvance += bor;
-        return bor > 0 ? `"${att} (B: ₹${bor})"` : `"${att}"`;
-      });
-
-      const totalAmount = totalWork * (w.wage || 0);
-      const balance = totalAmount - totalAdvance;
-
-      csv += `"${w.groupName || w.name}","${w.name}",${w.wage},${dayCols.join(',')},${totalAdvance},${totalWork},${totalAmount},${balance}\n`;
-    });
-
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Civil_Weekly_Attendance_${currentWeekStart}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast('Exported weekly muster roll to CSV');
-  };
 
   // Count unique employee groups
   const groupCount = useMemo(() => {
@@ -434,90 +546,44 @@ export default function App() {
       {/* Top Navbar */}
       <header className="top-navbar">
         <div className="brand-badge">
-          <div className="brand-logo-frame">
-            <img 
-              src="/rdn_logo.png" 
-              alt="RDN CREATORS" 
-              className="brand-logo-img" 
-            />
-          </div>
+          <img 
+            src="/rdn_logo.png" 
+            alt="RDN CREATORS" 
+            className="brand-logo-img" 
+          />
           <div className="brand-divider" />
           <div className="brand-title-group">
             <div className="brand-title-row">
-              <h1>RDN CREATORS</h1>
-              <span className="brand-badge-tag">CIVIL REGISTER</span>
-            </div>
+              <h1>RDN CREATORS</h1>            </div>
             <p>Workers Weekly Attendance &amp; Payroll</p>
           </div>
         </div>
 
         <div className="header-actions">
-          {/* Cloud Status / Connection Pill */}
-          {isSupabaseConfigured ? (
-            <div className="cloud-status-pill online" title="Live connection to Supabase PostgreSQL database">
-              <span className="cloud-dot online" />
-              <Cloud size={13} />
-              <span>Cloud Connected</span>
-              <button 
-                type="button" 
-                className="cloud-sync-btn"
-                onClick={handleSyncToCloud}
-                disabled={isCloudSyncing}
-                title="Sync local data to Supabase Cloud"
-                aria-label="Sync local data to Supabase Cloud"
-              >
-                <RefreshCw size={11} className={isCloudSyncing ? 'spinning' : ''} />
-              </button>
+          {/* Connection / Live Status Indicator (No buttons) */}
+          {isOnline ? (
+            <div className="connection-status-pill online" title="Internet is connected. Attendance is live.">
+              <span className="status-dot green" />
+              <span>Attendance is live</span>
             </div>
           ) : (
-            <div className="cloud-status-pill offline" title="Currently in Local Mode. Add Supabase keys in .env to connect Cloud Database.">
-              <span className="cloud-dot offline" />
-              <Database size={13} />
-              <span>Local Mode</span>
+            <div className="connection-status-pill offline" title="You are offline. Attendance is not saved.">
+              <span className="status-dot red" />
+              <span>You are offline</span>
             </div>
           )}
-
-          {/* Black / Dark Theme Toggle Button */}
-          <button
-            type="button"
-            className="theme-toggle-btn"
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to Light theme' : 'Switch to Black theme'}
-            aria-label="Toggle Black Theme"
-          >
-            {theme === 'dark' ? (
-              <>
-                <Sun size={15} color="#fbbf24" />
-                <span>Light</span>
-              </>
-            ) : (
-              <>
-                <Moon size={15} color="#475569" />
-                <span>Black</span>
-              </>
-            )}
-          </button>
-
-          <button 
-            className="btn btn-secondary btn-sm" 
-            onClick={() => setIsExportModalOpen(true)}
-            title="Export CSV spreadsheet (Weekly or Monthly)"
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
-
-          {/* Add Employee Option (Vibrant Green) */}
-          <button 
-            className="btn btn-add-employee btn-sm"
-            onClick={() => handleOpenAddWorker()}
-            title="Add employee group (Manson, M - Helper, F - Helper) to roster"
-          >
-            <UserPlus size={16} />
-            Add Employee
-          </button>
         </div>
       </header>
+
+      {/* Offline Alert Notification Banner */}
+      {!isOnline && (
+        <div className="offline-alert-banner" role="alert">
+          <span className="offline-banner-icon">⚠️</span>
+          <span>
+            <strong>You are offline:</strong> Attendance is not saved! Please connect to the internet to record attendance.
+          </span>
+        </div>
+      )}
 
       {/* 1. Week Header with Close/Reopen option and Recent Weeks */}
       <WeekHeader 
@@ -532,24 +598,60 @@ export default function App() {
       <div className="table-container">
         {/* Table Toolbar */}
         <div className="table-toolbar">
-          <div className="table-toolbar-title">
-            <h3>Site Attendance &amp; Wages Roster</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              ({groupCount} {groupCount === 1 ? 'Group' : 'Groups'} • {masons.length} Rows)
-            </span>
+          <div className="table-toolbar-left">
+            <div className="table-toolbar-title">
+              <h3>Site Attendance</h3>
+              <span className="table-count-badge">
+                {groupCount} {groupCount === 1 ? 'Group' : 'Groups'} • {masons.length} Rows
+              </span>
+            </div>
           </div>
 
-          {/* Search Filter */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={14} style={{ position: 'absolute', left: '0.75rem', color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              className="form-input"
-              style={{ paddingLeft: '2rem', paddingRight: '0.75rem', paddingTop: '0.35rem', paddingBottom: '0.35rem', fontSize: '0.82rem', width: '200px' }}
-              placeholder="Search employee name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="table-toolbar-actions">
+            {/* Search Filter */}
+            <div className="table-search-box">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                className="table-search-input"
+                placeholder="Search employee"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                  aria-label="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Export Report / CSV Button */}
+            <button 
+              type="button"
+              className="btn btn-export" 
+              onClick={() => setIsExportModalOpen(true)}
+              title="Export weekly or monthly attendance & payroll (CSV / PDF)"
+            >
+              <Download size={14} />
+              <span>Export</span>
+            </button>
+
+            {/* Add Employee CTA Button */}
+            <button 
+              type="button"
+              className="btn btn-add-employee"
+              onClick={() => handleOpenAddWorker()}
+              title="Add a new employee group (Mason, M-Helper, F-Helper)"
+            >
+              <UserPlus size={15} />
+              <span>Add Employee</span>
+            </button>
           </div>
         </div>
 
@@ -597,6 +699,7 @@ export default function App() {
         dayInfo={cellModalState.dayInfo}
         currentData={cellModalState.currentData}
         onSave={handleSaveCell}
+        isOnline={isOnline}
       />
 
       {/* Whole Week Attendance Modal */}
@@ -607,6 +710,7 @@ export default function App() {
         daysOfWeek={daysOfWeek}
         currentWeekAttendance={wholeWeekModalState.worker ? (weekAttendance[wholeWeekModalState.worker.id] || {}) : {}}
         onSaveWholeWeek={handleSaveWholeWeek}
+        isOnline={isOnline}
       />
 
       {/* Add Employee Modal */}

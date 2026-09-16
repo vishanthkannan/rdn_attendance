@@ -1,12 +1,11 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Lock, Unlock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Lock } from 'lucide-react';
 import { formatWeekRange, PRESET_WEEKS, CURRENT_WEEK_ID, shiftWeek } from '../utils/dateUtils';
 
 export default function WeekHeader({ 
   currentWeekStart, 
   onSelectWeek,
   isWeekClosed,
-  onToggleCloseWeek,
   closedWeeks = []
 }) {
   const isCurrentWeek = currentWeekStart === CURRENT_WEEK_ID;

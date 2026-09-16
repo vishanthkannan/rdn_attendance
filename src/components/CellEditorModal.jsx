@@ -7,7 +7,8 @@ export default function CellEditorModal({
   worker, 
   dayInfo, 
   currentData, 
-  onSave 
+  onSave,
+  isOnline = true
 }) {
   const [attendance, setAttendance] = useState('0');
   const [borrowed, setBorrowed] = useState('0');
@@ -33,6 +34,10 @@ export default function CellEditorModal({
 
   const handleSave = (e) => {
     e?.preventDefault();
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      return;
+    }
     const attNum = Math.max(0, parseFloat(attendance) || 0);
     const borNum = Math.max(0, parseFloat(borrowed) || 0);
     onSave({
@@ -44,6 +49,10 @@ export default function CellEditorModal({
   };
 
   const handleClear = () => {
+    if (!isOnline) {
+      alert('Attendance is not saved! You are currently offline. Please connect to the internet.');
+      return;
+    }
     setAttendance('0');
     setBorrowed('0');
     onSave({
@@ -63,7 +72,7 @@ export default function CellEditorModal({
         {/* Header */}
         <div className="modal-header">
           <div>
-            <h3>Daily Attendance & Borrowed Advance</h3>
+            <h3>Daily Attendance & Advance</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
               <Calendar size={14} />
               <span>{dayInfo.formattedDay}</span>
@@ -81,6 +90,13 @@ export default function CellEditorModal({
         {/* Form Body */}
         <form onSubmit={handleSave}>
           <div className="modal-body">
+            {!isOnline && (
+              <div className="modal-offline-warning" role="alert">
+                <span>⚠️</span>
+                <span><strong>Attendance is not saved!</strong> You are currently offline. Please reconnect to the internet.</span>
+              </div>
+            )}
+
             {/* Worker Info Card */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--bg-surface-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -96,9 +112,6 @@ export default function CellEditorModal({
                       worker.name
                     )}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Wage Rate: ₹{worker.wagePerWork} / work
-                  </div>
                 </div>
               </div>
             </div>
@@ -106,7 +119,7 @@ export default function CellEditorModal({
             {/* Attendance Input */}
             <div className="form-group">
               <label className="form-label" htmlFor="att-input">
-                Attendance Count / Units
+                Attendance Count
               </label>
               <input
                 id="att-input"
@@ -145,7 +158,7 @@ export default function CellEditorModal({
                   }}
                 >
                   <Plus size={16} color="var(--color-advance)" />
-                  <span>+ Add Borrow / Advance</span>
+                  <span>+ Advance</span>
                 </button>
               </div>
             ) : (
@@ -220,7 +233,7 @@ export default function CellEditorModal({
                 htmlFor="apply-whole-week-chk" 
                 style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}
               >
-                Apply this attendance ({attendance} units) to all 7 days of this week
+                Apply this attendance ({attendance} units) to whole week
               </label>
             </div>
           </div>

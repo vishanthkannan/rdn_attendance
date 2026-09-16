@@ -7,7 +7,7 @@
 -- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Worker Groups Table (e.g. Suresh, Ramesh teams)
+-- 2. Worker Groups Table
 CREATE TABLE IF NOT EXISTS worker_groups (
   id VARCHAR(100) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -93,19 +93,34 @@ CREATE POLICY "Allow public update closed_weeks" ON closed_weeks FOR UPDATE USIN
 CREATE POLICY "Allow public delete closed_weeks" ON closed_weeks FOR DELETE USING (true);
 
 -- ==============================================================================
--- Initial Seed Data (Suresh & Ramesh Teams)
+-- 6. Enable Realtime Publications & Replica Identity (For Instant Multi-Device Live Sync)
 -- ==============================================================================
 
-INSERT INTO worker_groups (id, name) VALUES
-  ('mason-suresh', 'Suresh'),
-  ('mason-ramesh', 'Ramesh')
-ON CONFLICT (id) DO NOTHING;
+-- Enable full row replica identity so updates and deletes broadcast complete row payloads
+ALTER TABLE worker_groups REPLICA IDENTITY FULL;
+ALTER TABLE workers REPLICA IDENTITY FULL;
+ALTER TABLE daily_attendance REPLICA IDENTITY FULL;
+ALTER TABLE closed_weeks REPLICA IDENTITY FULL;
 
-INSERT INTO workers (id, group_id, group_name, name, category, wage) VALUES
-  ('mason-suresh_mason', 'mason-suresh', 'Suresh', 'Manson', 'Manson', 0),
-  ('mason-suresh_mhelper', 'mason-suresh', 'Suresh', 'M-Helper', 'M-Helper', 0),
-  ('mason-suresh_fhelper', 'mason-suresh', 'Suresh', 'F-Helper', 'F-Helper', 0),
-  ('mason-ramesh_mason', 'mason-ramesh', 'Ramesh', 'Manson', 'Manson', 0),
-  ('mason-ramesh_mhelper', 'mason-ramesh', 'Ramesh', 'M-Helper', 'M-Helper', 0),
-  ('mason-ramesh_fhelper', 'mason-ramesh', 'Ramesh', 'F-Helper', 'F-Helper', 0)
-ON CONFLICT (id) DO NOTHING;
+-- Add tables to the supabase_realtime publication
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE worker_groups;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE workers;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE daily_attendance;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE closed_weeks;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;
+
+
