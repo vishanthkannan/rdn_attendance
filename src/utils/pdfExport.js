@@ -1,7 +1,11 @@
-// PDF Export Utility using jsPDF and jspdf-autotable
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatWeekRange, getDaysInMonth } from './dateUtils';
+import { 
+  formatWeekRange, 
+  getDaysInMonth,
+  isWorkerVisibleInWeek,
+  isWorkerVisibleInMonth
+} from './dateUtils';
 
 /**
  * Export Weekly Attendance and Payroll as an openable, standard PDF file
@@ -25,10 +29,11 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
   doc.text('RDN CREATORS - Civil Workers Weekly Attendance & Payroll', 40, 40);
 
   // Subtitle / Info Row
+  const targetMasons = masons.filter((w) => isWorkerVisibleInWeek(w, selectedWeek, attendance[selectedWeek]));
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(71, 85, 105); // slate-600
-  doc.text(`Week Range: ${rangeStr}   |   Status: ${statusStr}   |   Total Workers: ${masons.length}`, 40, 58);
+  doc.text(`Week Range: ${rangeStr}   |   Status: ${statusStr}   |   Total Workers: ${targetMasons.length}`, 40, 58);
   doc.text(`Exported on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 40, 72);
 
   // Prepare Table Columns
@@ -53,7 +58,7 @@ export function exportWeeklyPDF({ selectedWeek, daysOfWeek, masons, attendance, 
   let grandTotalAmount = 0;
   let grandTotalBalance = 0;
 
-  const tableRows = masons.map((w) => {
+  const tableRows = targetMasons.map((w) => {
     const rowAtt = weekData[w.id] || {};
     let totalWork = 0;
     let totalAdvance = 0;
@@ -195,10 +200,11 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
   doc.text('RDN CREATORS - Civil Workers Monthly Attendance & Payroll Register', 25, 30);
 
   // Subtitle / Info Row
+  const targetMasons = masons.filter((w) => isWorkerVisibleInMonth(w, selectedMonth, attendance));
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`Month: ${monthObj.label}   |   Days: ${monthDays.length}   |   Total Workers: ${masons.length}`, 25, 45);
+  doc.text(`Month: ${monthObj.label}   |   Days: ${monthDays.length}   |   Total Workers: ${targetMasons.length}`, 25, 45);
   doc.text(`Exported on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 25, 57);
 
   // Day columns across the month
@@ -225,7 +231,7 @@ export function exportMonthlyPDF({ selectedMonth, availableMonths, masons, atten
   const dailyTotals = {};
   monthDays.forEach((d) => { dailyTotals[d.isoDate] = 0; });
 
-  const tableRows = masons.map((w) => {
+  const tableRows = targetMasons.map((w) => {
     let totalWorkMonth = 0;
     let totalAdvanceMonth = 0;
 

@@ -20,7 +20,11 @@ export function normalizeToIndividualWorkers(items) {
         ...item,
         groupId: item.groupId || item.id,
         groupName: item.groupName || item.name,
-        wage: cleanWage
+        wage: cleanWage,
+        assignedWeek: item.assignedWeek || item.createdAtWeek || null,
+        createdAtWeek: item.createdAtWeek || item.assignedWeek || null,
+        deletedAtWeek: item.deletedAtWeek || null,
+        deletedAt: item.deletedAt || null
       });
     } else {
       // Legacy grouped structure conversion

@@ -24,7 +24,11 @@ export async function fetchAllCloudData() {
       groupName: w.group_name,
       name: w.name,
       category: w.category,
-      wage: Number(w.wage) || 0
+      wage: Number(w.wage) || 0,
+      assignedWeek: w.assigned_week || w.created_at_week || null,
+      createdAtWeek: w.created_at_week || w.assigned_week || null,
+      deletedAtWeek: w.deleted_at_week || null,
+      deletedAt: w.deleted_at || null
     }));
 
     // Transform attendance into { [weekKey]: { [workerId]: { [date]: { attendance, borrowed } } } }
@@ -124,20 +128,37 @@ export async function addEmployeeGroupCloud({ groupId, groupName, workers }) {
     if (groupError) throw groupError;
 
     // 2. Insert Workers
-    const workerRows = workers.map((w) => ({
-      id: w.id,
-      group_id: groupId,
-      group_name: groupName,
-      name: w.name,
-      category: w.category,
-      wage: Number(w.wage) || 0
-    }));
+    const workerRows = workers.map((w) => {
+      const row = {
+        id: w.id,
+        group_id: groupId,
+        group_name: groupName,
+        name: w.name,
+        category: w.category,
+        wage: Number(w.wage) || 0
+      };
+      if (w.assignedWeek || w.createdAtWeek) row.created_at_week = w.assignedWeek || w.createdAtWeek;
+      return row;
+    });
 
-    const { error: workerError } = await supabase
-      .from('workers')
-      .upsert(workerRows, { onConflict: 'id' });
+    try {
+      const { error: workerError } = await supabase
+        .from('workers')
+        .upsert(workerRows, { onConflict: 'id' });
 
-    if (workerError) throw workerError;
+      if (workerError) throw workerError;
+    } catch (err) {
+      // Fallback without created_at_week if column is not yet in Supabase schema
+      const fallbackRows = workers.map((w) => ({
+        id: w.id,
+        group_id: groupId,
+        group_name: groupName,
+        name: w.name,
+        category: w.category,
+        wage: Number(w.wage) || 0
+      }));
+      await supabase.from('workers').upsert(fallbackRows, { onConflict: 'id' });
+    }
   } catch (err) {
     console.error('Error adding employee group to Supabase:', err);
   }
@@ -162,34 +183,47 @@ export async function updateWorkerWageCloud(workerId, wage) {
 }
 
 /**
- * Delete an individual worker from Supabase
+ * Soft-delete an individual worker starting from effectiveWeek onwards.
+ * Historical attendance from previous weeks is safely PRESERVED and never deleted.
  */
-export async function deleteWorkerCloud(workerId) {
+export async function deleteWorkerCloud(workerId, effectiveWeek = null) {
   if (!isSupabaseConfigured || !supabase) return;
 
   try {
-    // Delete attendance rows first
-    await supabase
-      .from('daily_attendance')
-      .delete()
-      .eq('worker_id', workerId);
+    // 1. If effectiveWeek is provided, clear only that week's draft attendance
+    if (effectiveWeek) {
+      await supabase
+        .from('daily_attendance')
+        .delete()
+        .eq('worker_id', workerId)
+        .eq('week_start', effectiveWeek);
+    }
 
-    // Delete worker record
+    // 2. Mark worker as soft-deleted from effectiveWeek onwards
+    const updatePayload = {
+      deleted_at_week: effectiveWeek,
+      deleted_at: new Date().toISOString()
+    };
+
     const { error } = await supabase
       .from('workers')
-      .delete()
+      .update(updatePayload)
       .eq('id', workerId);
 
-    if (error) throw error;
+    if (error) {
+      // If column deleted_at_week doesn't exist yet on Supabase, log notice but do NOT hard-delete past records!
+      console.warn('Note: Run the latest supabase_schema.sql in Supabase SQL editor to add deleted_at_week column.', error.message);
+    }
   } catch (err) {
-    console.error('Error deleting worker in Supabase:', err);
+    console.error('Error soft-deleting worker in Supabase:', err);
   }
 }
 
 /**
- * Delete an entire group from Supabase (cascades to workers and attendance)
+ * Soft-delete an entire group starting from effectiveWeek onwards.
+ * Historical attendance from previous weeks is safely PRESERVED and never deleted.
  */
-export async function deleteGroupCloud(groupId) {
+export async function deleteGroupCloud(groupId, effectiveWeek = null) {
   if (!isSupabaseConfigured || !supabase) return;
 
   try {
@@ -201,28 +235,33 @@ export async function deleteGroupCloud(groupId) {
 
     if (groupWorkers && groupWorkers.length > 0) {
       const workerIds = groupWorkers.map((w) => w.id);
-      // Delete daily attendance for all workers in group
-      await supabase
-        .from('daily_attendance')
-        .delete()
-        .in('worker_id', workerIds);
+
+      // 2. Clear only the effectiveWeek's attendance for these workers
+      if (effectiveWeek) {
+        await supabase
+          .from('daily_attendance')
+          .delete()
+          .in('worker_id', workerIds)
+          .eq('week_start', effectiveWeek);
+      }
+
+      // 3. Mark workers as soft-deleted from effectiveWeek onwards
+      const updatePayload = {
+        deleted_at_week: effectiveWeek,
+        deleted_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('workers')
+        .update(updatePayload)
+        .in('id', workerIds);
+
+      if (error) {
+        console.warn('Note: Run the latest supabase_schema.sql in Supabase SQL editor to add deleted_at_week column.', error.message);
+      }
     }
-
-    // 2. Delete all workers in group
-    await supabase
-      .from('workers')
-      .delete()
-      .eq('group_id', groupId);
-
-    // 3. Delete the group itself
-    const { error } = await supabase
-      .from('worker_groups')
-      .delete()
-      .eq('id', groupId);
-
-    if (error) throw error;
   } catch (err) {
-    console.error('Error deleting group in Supabase:', err);
+    console.error('Error soft-deleting group in Supabase:', err);
   }
 }
 

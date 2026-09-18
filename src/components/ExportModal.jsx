@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Download, Calendar, FileSpreadsheet, FileText, X, CheckCircle2 } from 'lucide-react';
-import { PRESET_WEEKS, formatWeekRange, getDaysInMonth } from '../utils/dateUtils';
+import { 
+  PRESET_WEEKS, 
+  formatWeekRange, 
+  getDaysInMonth,
+  isWorkerVisibleInWeek,
+  isWorkerVisibleInMonth
+} from '../utils/dateUtils';
 import { exportWeeklyPDF, exportMonthlyPDF } from '../utils/pdfExport';
 
 export default function ExportModal({
@@ -24,6 +30,16 @@ export default function ExportModal({
     { id: '2026-10', label: 'October 2026', year: 2026, month: 9 }
   ];
   const [selectedMonth, setSelectedMonth] = useState('2026-09');
+
+  // Workers visible for the selected week (preserves historical workers when exporting past weeks)
+  const weekMasons = useMemo(() => {
+    return masons.filter((w) => isWorkerVisibleInWeek(w, selectedWeek, attendance[selectedWeek]));
+  }, [masons, selectedWeek, attendance]);
+
+  // Workers visible for the selected month (preserves all workers who worked or were active in that month)
+  const monthMasons = useMemo(() => {
+    return masons.filter((w) => isWorkerVisibleInMonth(w, selectedMonth, attendance));
+  }, [masons, selectedMonth, attendance]);
 
   if (!isOpen) return null;
 
@@ -56,7 +72,7 @@ export default function ExportModal({
 
     const weekData = attendance[selectedWeek] || {};
 
-    masons.forEach((w) => {
+    weekMasons.forEach((w) => {
       const rowAtt = weekData[w.id] || {};
       let totalWork = 0;
       let totalAdvance = 0;
@@ -90,7 +106,7 @@ export default function ExportModal({
     let csv = `RDN CREATORS - Civil Workers Monthly Attendance & Payroll Register\n`;
     csv += `Month: ${monthObj.label}\n`;
     csv += `Total Days: ${monthDays.length}\n`;
-    csv += `Total Workers: ${masons.length}\n\n`;
+    csv += `Total Workers: ${monthMasons.length}\n\n`;
 
     // Headers for all individual days of the month
     const dayHeaders = monthDays.map((d) => `"${d.dateNumber} ${d.monthName} (${d.dayName})"`).join(',');
@@ -103,7 +119,7 @@ export default function ExportModal({
     const dailyTotals = {};
     monthDays.forEach((d) => { dailyTotals[d.isoDate] = 0; });
 
-    masons.forEach((w) => {
+    monthMasons.forEach((w) => {
       let totalWorkMonth = 0;
       let totalAdvanceMonth = 0;
 
@@ -162,7 +178,7 @@ export default function ExportModal({
           exportWeeklyPDF({
             selectedWeek,
             daysOfWeek,
-            masons,
+            masons: weekMasons,
             attendance,
             closedWeeks
           });
@@ -170,7 +186,7 @@ export default function ExportModal({
           exportMonthlyPDF({
             selectedMonth,
             availableMonths,
-            masons,
+            masons: monthMasons,
             attendance
           });
         }

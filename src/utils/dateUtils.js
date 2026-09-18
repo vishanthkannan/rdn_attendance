@@ -117,3 +117,84 @@ export function getDaysInMonth(yearMonthStr) {
   return days;
 }
 
+/**
+ * Determines whether a worker should be displayed in a given week.
+ *
+ * Rules:
+ * 1. If the worker has ANY non-zero attendance or advance in this week, they MUST be visible (historical data integrity).
+ * 2. If the worker was deleted in or before this week (worker.deletedAtWeek <= weekStart), they are hidden.
+ * 3. Week-specific assignment:
+ *    When a user adds an employee to a week, they belong ONLY to that specific week.
+ *    They are not automatically moved or carried over to the next week (for the next week the user creates newly).
+ * 4. Legacy fallback: if neither assignedWeek nor createdAtWeek is set, visible if not deleted.
+ */
+export function isWorkerVisibleInWeek(worker, weekStart, weekAttendance = {}) {
+  if (!worker) return false;
+
+  // 1. Any recorded attendance or advance in this week keeps worker visible
+  const workerWeekRecords = weekAttendance[worker.id];
+  if (workerWeekRecords) {
+    const hasAnyRecord = Object.values(workerWeekRecords).some(
+      (rec) => (Number(rec?.attendance) || 0) > 0 || (Number(rec?.borrowed) || 0) > 0
+    );
+    if (hasAnyRecord) return true;
+  }
+
+  // 2. If worker was deleted in or before this week, hide from this week onwards
+  if (worker.deletedAtWeek && worker.deletedAtWeek <= weekStart) {
+    return false;
+  }
+
+  // 3. Week-specific assignment: employee added to a week belongs ONLY to that week
+  const targetWeek = worker.assignedWeek || worker.createdAtWeek;
+  if (targetWeek) {
+    return targetWeek === weekStart;
+  }
+
+  // 4. Legacy fallback
+  return true;
+}
+
+/**
+ * Determines whether a worker should be included in a given month's report.
+ *
+ * Rules:
+ * 1. If the worker has ANY non-zero attendance or advance across any day of that month, they MUST be included.
+ * 2. If the worker was deleted BEFORE this month started (worker.deletedAtWeek < monthFirstDay), they are excluded.
+ * 3. If the worker was assigned/created in a week, check if that week falls within this month.
+ * 4. Otherwise, included if active.
+ */
+export function isWorkerVisibleInMonth(worker, yearMonthStr, attendance = {}) {
+  if (!worker) return false;
+
+  const monthDays = getDaysInMonth(yearMonthStr);
+  const firstDayStr = `${yearMonthStr}-01`;
+  const lastDayStr = monthDays.length > 0 ? monthDays[monthDays.length - 1].isoDate : `${yearMonthStr}-31`;
+
+  // 1. Check if worker has any attendance or advance anywhere in this month
+  for (const weekKey of Object.keys(attendance)) {
+    const workerAtt = attendance[weekKey]?.[worker.id];
+    if (workerAtt) {
+      for (const d of monthDays) {
+        const rec = workerAtt[d.isoDate];
+        if (rec && ((Number(rec.attendance) || 0) > 0 || (Number(rec.borrowed) || 0) > 0)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // 2. If worker was deleted before this month started (i.e. deletedAtWeek < month first day)
+  if (worker.deletedAtWeek && worker.deletedAtWeek < firstDayStr) {
+    return false;
+  }
+
+  // 3. If worker was assigned/created for a specific week, check if that week falls within this month
+  const targetWeek = worker.assignedWeek || worker.createdAtWeek;
+  if (targetWeek) {
+    return targetWeek >= firstDayStr && targetWeek <= lastDayStr;
+  }
+
+  return true;
+}
+

@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS workers (
   name VARCHAR(255) NOT NULL,
   category VARCHAR(100) NOT NULL,
   wage NUMERIC(10, 2) DEFAULT 0 NOT NULL,
+  created_at_week VARCHAR(20) DEFAULT NULL,
+  deleted_at_week VARCHAR(20) DEFAULT NULL,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -122,5 +125,11 @@ BEGIN
   EXCEPTION WHEN duplicate_object THEN NULL;
   END;
 END $$;
+
+-- Migration for existing databases: add soft-delete and lifecycle columns
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS assigned_week VARCHAR(20) DEFAULT NULL;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS created_at_week VARCHAR(20) DEFAULT NULL;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at_week VARCHAR(20) DEFAULT NULL;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 

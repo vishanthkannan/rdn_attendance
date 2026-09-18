@@ -7,7 +7,9 @@ import WholeWeekModal from './components/WholeWeekModal';
 import ExportModal from './components/ExportModal';
 import { 
   getDaysOfWeek, 
-  CURRENT_WEEK_ID 
+  CURRENT_WEEK_ID,
+  formatWeekRange,
+  isWorkerVisibleInWeek
 } from './utils/dateUtils';
 import { 
   loadMasons, 
@@ -202,7 +204,11 @@ export default function App() {
             groupName: w.group_name,
             name: w.name,
             category: w.category,
-            wage: Number(w.wage) || 0
+            wage: Number(w.wage) || 0,
+            assignedWeek: w.assigned_week || w.created_at_week || null,
+            createdAtWeek: w.created_at_week || w.assigned_week || null,
+            deletedAtWeek: w.deleted_at_week || null,
+            deletedAt: w.deleted_at || null
           };
           setMasons((prev) => {
             const index = prev.findIndex((m) => m.id === w.id);
@@ -212,7 +218,10 @@ export default function App() {
                 current.wage === updatedWorker.wage &&
                 current.name === updatedWorker.name &&
                 current.groupName === updatedWorker.groupName &&
-                current.category === updatedWorker.category
+                current.category === updatedWorker.category &&
+                current.deletedAtWeek === updatedWorker.deletedAtWeek &&
+                current.createdAtWeek === updatedWorker.createdAtWeek &&
+                current.assignedWeek === updatedWorker.assignedWeek
               ) {
                 return prev;
               }
@@ -283,16 +292,23 @@ export default function App() {
     return attendance[currentWeekStart] || {};
   }, [attendance, currentWeekStart]);
 
+  // Workers visible in the currently viewed week (preserves historical workers when viewing past weeks)
+  const visibleMasonsForCurrentWeek = useMemo(() => {
+    return masons.filter((worker) => 
+      isWorkerVisibleInWeek(worker, currentWeekStart, attendance[currentWeekStart])
+    );
+  }, [masons, currentWeekStart, attendance]);
+
   // Filtered masons based on search (searches groupName, worker name, category)
   const filteredMasons = useMemo(() => {
-    if (!searchTerm.trim()) return masons;
+    if (!searchTerm.trim()) return visibleMasonsForCurrentWeek;
     const term = searchTerm.toLowerCase();
-    return masons.filter((m) => 
+    return visibleMasonsForCurrentWeek.filter((m) => 
       (m.groupName && m.groupName.toLowerCase().includes(term)) ||
       (m.name && m.name.toLowerCase().includes(term)) ||
       (m.category && m.category.toLowerCase().includes(term))
     );
-  }, [masons, searchTerm]);
+  }, [visibleMasonsForCurrentWeek, searchTerm]);
 
   // Toggle Week Close / Reopen
   const handleToggleCloseWeek = () => {
@@ -455,7 +471,10 @@ export default function App() {
         groupName,
         name: 'Manson',
         category: 'Manson',
-        wage: Math.max(0, parseFloat(masonWage) || 0)
+        wage: Math.max(0, parseFloat(masonWage) || 0),
+        assignedWeek: currentWeekStart,
+        createdAtWeek: currentWeekStart,
+        deletedAtWeek: null
       },
       {
         id: `${groupId}_mhelper`,
@@ -463,7 +482,10 @@ export default function App() {
         groupName,
         name: 'M-Helper',
         category: 'M-Helper',
-        wage: Math.max(0, parseFloat(mHelperWage) || 0)
+        wage: Math.max(0, parseFloat(mHelperWage) || 0),
+        assignedWeek: currentWeekStart,
+        createdAtWeek: currentWeekStart,
+        deletedAtWeek: null
       },
       {
         id: `${groupId}_fhelper`,
@@ -471,7 +493,10 @@ export default function App() {
         groupName,
         name: 'F-Helper',
         category: 'F-Helper',
-        wage: Math.max(0, parseFloat(fHelperWage) || 0)
+        wage: Math.max(0, parseFloat(fHelperWage) || 0),
+        assignedWeek: currentWeekStart,
+        createdAtWeek: currentWeekStart,
+        deletedAtWeek: null
       }
     ];
 
@@ -480,7 +505,7 @@ export default function App() {
     showToast(`Added employee ${groupName} with 3 rows (Manson, M-Helper, F-Helper)`);
   };
 
-  // Delete Individual Worker Row
+  // Delete Individual Worker Row (soft-deletes starting from current week onwards, safely preserves past weeks)
   const handleDeleteWorker = (workerId, workerName) => {
     if (isCurrentWeekClosed) return;
     if (!isOnline) {
@@ -489,18 +514,44 @@ export default function App() {
       return;
     }
 
-    if (window.confirm(`Delete ${workerName} row?`)) {
+    const currentRange = formatWeekRange(currentWeekStart);
+    if (window.confirm(`Delete ${workerName} from this week (${currentRange})?\n\nNote: Any past weeks and previous months records will remain safely preserved!`)) {
+      // 1. Mark worker as deleted from currentWeekStart onwards
       setMasons((prev) => {
-        const remaining = prev.filter((w) => w.id !== workerId);
-        saveMasons(remaining);
-        return remaining;
+        const updated = prev.map((w) => {
+          if (w.id === workerId) {
+            return {
+              ...w,
+              deletedAtWeek: currentWeekStart,
+              deletedAt: new Date().toISOString()
+            };
+          }
+          return w;
+        });
+        saveMasons(updated);
+        return updated;
       });
-      deleteWorkerCloud(workerId);
-      showToast(`Removed row ${workerName}`);
+
+      // 2. Clear current week draft attendance for this worker
+      setAttendance((prev) => {
+        if (!prev[currentWeekStart]?.[workerId]) return prev;
+        const updatedWeek = { ...prev[currentWeekStart] };
+        delete updatedWeek[workerId];
+        const next = {
+          ...prev,
+          [currentWeekStart]: updatedWeek
+        };
+        saveAttendance(next);
+        return next;
+      });
+
+      // 3. Update Supabase
+      deleteWorkerCloud(workerId, currentWeekStart);
+      showToast(`Removed row ${workerName} from this week onwards (past records preserved)`);
     }
   };
 
-  // Delete Entire Employee Group
+  // Delete Entire Employee Group (soft-deletes group from current week onwards, safely preserves past weeks)
   const handleDeleteGroup = (groupId, groupName) => {
     if (isCurrentWeekClosed) return;
     if (!isOnline) {
@@ -509,14 +560,53 @@ export default function App() {
       return;
     }
 
-    if (window.confirm(`Delete employee group "${groupName}" and all its rows?`)) {
+    const currentRange = formatWeekRange(currentWeekStart);
+    if (window.confirm(`Delete employee group "${groupName}" from this week (${currentRange})?\n\nNote: Any past weeks and previous months records will remain safely preserved!`)) {
+      // 1. Mark all workers in this group as deleted from currentWeekStart onwards
       setMasons((prev) => {
-        const remaining = prev.filter((w) => (w.groupId || w.id) !== groupId);
-        saveMasons(remaining);
-        return remaining;
+        const updated = prev.map((w) => {
+          if ((w.groupId || w.id) === groupId) {
+            return {
+              ...w,
+              deletedAtWeek: currentWeekStart,
+              deletedAt: new Date().toISOString()
+            };
+          }
+          return w;
+        });
+        saveMasons(updated);
+        return updated;
       });
-      deleteGroupCloud(groupId);
-      showToast(`Removed employee group ${groupName}`);
+
+      // 2. Clear current week attendance for workers in this group
+      setAttendance((prev) => {
+        const weekData = prev[currentWeekStart];
+        if (!weekData) return prev;
+        const groupWorkerIds = masons
+          .filter((w) => (w.groupId || w.id) === groupId)
+          .map((w) => w.id);
+        
+        let changed = false;
+        const updatedWeek = { ...weekData };
+        groupWorkerIds.forEach((wId) => {
+          if (updatedWeek[wId]) {
+            delete updatedWeek[wId];
+            changed = true;
+          }
+        });
+
+        if (!changed) return prev;
+        const next = {
+          ...prev,
+          [currentWeekStart]: updatedWeek
+        };
+        saveAttendance(next);
+        return next;
+      });
+
+      // 3. Update Supabase
+      deleteGroupCloud(groupId, currentWeekStart);
+      showToast(`Removed employee group ${groupName} from this week (past records preserved)`);
     }
   };
 
@@ -536,10 +626,10 @@ export default function App() {
   };
 
 
-  // Count unique employee groups
+  // Count unique employee groups in currently viewed week
   const groupCount = useMemo(() => {
-    return new Set(masons.map((m) => m.groupId || m.groupName || m.name)).size;
-  }, [masons]);
+    return new Set(visibleMasonsForCurrentWeek.map((m) => m.groupId || m.groupName || m.name)).size;
+  }, [visibleMasonsForCurrentWeek]);
 
   return (
     <div className="app-container">
@@ -560,18 +650,15 @@ export default function App() {
         </div>
 
         <div className="header-actions">
-          {/* Connection / Live Status Indicator (No buttons) */}
-          {isOnline ? (
-            <div className="connection-status-pill online" title="Internet is connected. Attendance is live.">
-              <span className="status-dot green" />
-              <span>Attendance is live</span>
-            </div>
-          ) : (
-            <div className="connection-status-pill offline" title="You are offline. Attendance is not saved.">
-              <span className="status-dot red" />
-              <span>You are offline</span>
-            </div>
-          )}
+          {/* Top Right Live Attendance Indicator - Just a Green Dot */}
+          <div 
+            className={`live-status-dot-indicator ${isOnline ? 'online' : 'offline'}`}
+            title={isOnline ? 'Attendance is live (Online)' : 'You are offline (Attendance not saved)'}
+            aria-label={isOnline ? 'Attendance is live' : 'You are offline'}
+            onClick={() => showToast(isOnline ? '🟢 Attendance is live' : '🔴 You are offline - Attendance is not saved')}
+          >
+            <span className={`live-dot ${isOnline ? 'green' : 'red'}`} />
+          </div>
         </div>
       </header>
 
