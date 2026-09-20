@@ -9,7 +9,8 @@ import {
   getDaysOfWeek, 
   CURRENT_WEEK_ID,
   formatWeekRange,
-  isWorkerVisibleInWeek
+  isWorkerVisibleInWeek,
+  getWorkerAssignedWeek
 } from './utils/dateUtils';
 import { 
   loadMasons, 
@@ -198,6 +199,7 @@ export default function App() {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
           const w = payload.new;
           if (!w || !w.id) return;
+          const assignedWeek = w.assigned_week || w.created_at_week || getWorkerAssignedWeek({ id: w.id, groupId: w.group_id });
           const updatedWorker = {
             id: w.id,
             groupId: w.group_id,
@@ -205,8 +207,8 @@ export default function App() {
             name: w.name,
             category: w.category,
             wage: Number(w.wage) || 0,
-            assignedWeek: w.assigned_week || w.created_at_week || null,
-            createdAtWeek: w.created_at_week || w.assigned_week || null,
+            assignedWeek: assignedWeek,
+            createdAtWeek: assignedWeek,
             deletedAtWeek: w.deleted_at_week || null,
             deletedAt: w.deleted_at || null
           };
@@ -463,7 +465,7 @@ export default function App() {
       return;
     }
     const groupName = name.trim();
-    const groupId = `group-${Date.now()}`;
+    const groupId = `group_${currentWeekStart}_${Date.now()}`;
     const newWorkers = [
       {
         id: `${groupId}_mason`,

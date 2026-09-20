@@ -118,6 +118,28 @@ export function getDaysInMonth(yearMonthStr) {
 }
 
 /**
+ * Resolves which week a worker was assigned to.
+ * Checks assignedWeek, createdAtWeek, embedded ID week, or defaults to CURRENT_WEEK_ID.
+ */
+export function getWorkerAssignedWeek(worker) {
+  if (!worker) return null;
+
+  // 1. Explicit properties
+  if (worker.assignedWeek) return worker.assignedWeek;
+  if (worker.createdAtWeek) return worker.createdAtWeek;
+
+  // 2. Embedded in ID or groupId: e.g. "group_2026-09-08_..." or "group_2026-09-15_..."
+  const idStr = `${worker.groupId || ''} ${worker.id || ''}`;
+  const match = idStr.match(/\d{4}-\d{2}-\d{2}/);
+  if (match) {
+    return match[0];
+  }
+
+  // 3. Fallback for legacy workers that don't have the date in ID
+  return CURRENT_WEEK_ID;
+}
+
+/**
  * Determines whether a worker should be displayed in a given week.
  *
  * Rules:
@@ -126,7 +148,7 @@ export function getDaysInMonth(yearMonthStr) {
  * 3. Week-specific assignment:
  *    When a user adds an employee to a week, they belong ONLY to that specific week.
  *    They are not automatically moved or carried over to the next week (for the next week the user creates newly).
- * 4. Legacy fallback: if neither assignedWeek nor createdAtWeek is set, visible if not deleted.
+ * 4. A worker is never displayed in another week unless they have recorded attendance or were assigned to it.
  */
 export function isWorkerVisibleInWeek(worker, weekStart, weekAttendance = {}) {
   if (!worker) return false;
@@ -146,13 +168,13 @@ export function isWorkerVisibleInWeek(worker, weekStart, weekAttendance = {}) {
   }
 
   // 3. Week-specific assignment: employee added to a week belongs ONLY to that week
-  const targetWeek = worker.assignedWeek || worker.createdAtWeek;
-  if (targetWeek) {
-    return targetWeek === weekStart;
+  const assignedWeek = getWorkerAssignedWeek(worker);
+  if (assignedWeek) {
+    return assignedWeek === weekStart;
   }
 
-  // 4. Legacy fallback
-  return true;
+  // 4. If no week can be determined, hide from this week
+  return false;
 }
 
 /**
@@ -190,11 +212,11 @@ export function isWorkerVisibleInMonth(worker, yearMonthStr, attendance = {}) {
   }
 
   // 3. If worker was assigned/created for a specific week, check if that week falls within this month
-  const targetWeek = worker.assignedWeek || worker.createdAtWeek;
-  if (targetWeek) {
-    return targetWeek >= firstDayStr && targetWeek <= lastDayStr;
+  const assignedWeek = getWorkerAssignedWeek(worker);
+  if (assignedWeek) {
+    return assignedWeek >= firstDayStr && assignedWeek <= lastDayStr;
   }
 
-  return true;
+  return false;
 }
 

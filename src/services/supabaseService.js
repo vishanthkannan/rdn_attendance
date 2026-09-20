@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
+import { getWorkerAssignedWeek } from '../utils/dateUtils';
 
 /**
  * Fetch all groups, workers, attendance records, and closed weeks from Supabase
@@ -18,18 +19,22 @@ export async function fetchAllCloudData() {
     if (closedWeeksRes.error) throw closedWeeksRes.error;
 
     // Transform workers
-    const masons = (workersRes.data || []).map((w) => ({
-      id: w.id,
-      groupId: w.group_id,
-      groupName: w.group_name,
-      name: w.name,
-      category: w.category,
-      wage: Number(w.wage) || 0,
-      assignedWeek: w.assigned_week || w.created_at_week || null,
-      createdAtWeek: w.created_at_week || w.assigned_week || null,
-      deletedAtWeek: w.deleted_at_week || null,
-      deletedAt: w.deleted_at || null
-    }));
+    const masons = (workersRes.data || []).map((w) => {
+      const assignedWeek = w.assigned_week || w.created_at_week || getWorkerAssignedWeek({ id: w.id, groupId: w.group_id });
+
+      return {
+        id: w.id,
+        groupId: w.group_id,
+        groupName: w.group_name,
+        name: w.name,
+        category: w.category,
+        wage: Number(w.wage) || 0,
+        assignedWeek: assignedWeek,
+        createdAtWeek: assignedWeek,
+        deletedAtWeek: w.deleted_at_week || null,
+        deletedAt: w.deleted_at || null
+      };
+    });
 
     // Transform attendance into { [weekKey]: { [workerId]: { [date]: { attendance, borrowed } } } }
     const attendance = {};
@@ -137,7 +142,10 @@ export async function addEmployeeGroupCloud({ groupId, groupName, workers }) {
         category: w.category,
         wage: Number(w.wage) || 0
       };
-      if (w.assignedWeek || w.createdAtWeek) row.created_at_week = w.assignedWeek || w.createdAtWeek;
+      if (w.assignedWeek || w.createdAtWeek) {
+        row.assigned_week = w.assignedWeek || w.createdAtWeek;
+        row.created_at_week = w.assignedWeek || w.createdAtWeek;
+      }
       return row;
     });
 

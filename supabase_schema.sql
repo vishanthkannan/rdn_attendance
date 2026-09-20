@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS workers (
   name VARCHAR(255) NOT NULL,
   category VARCHAR(100) NOT NULL,
   wage NUMERIC(10, 2) DEFAULT 0 NOT NULL,
+  assigned_week VARCHAR(20) DEFAULT NULL,
   created_at_week VARCHAR(20) DEFAULT NULL,
   deleted_at_week VARCHAR(20) DEFAULT NULL,
   deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
@@ -131,5 +132,8 @@ ALTER TABLE workers ADD COLUMN IF NOT EXISTS assigned_week VARCHAR(20) DEFAULT N
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS created_at_week VARCHAR(20) DEFAULT NULL;
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at_week VARCHAR(20) DEFAULT NULL;
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+
+-- Backfill any existing workers to week 2026-09-08 so they don't leak into other weeks
+UPDATE workers SET assigned_week = '2026-09-08', created_at_week = '2026-09-08' WHERE assigned_week IS NULL;
 
 
