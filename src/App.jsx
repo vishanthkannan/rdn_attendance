@@ -726,7 +726,7 @@ export default function App() {
               onClick={() => setIsExportModalOpen(true)}
               title="Export weekly or monthly attendance & payroll (CSV / PDF)"
             >
-              <Download size={14} />
+              <Download size={13} />
               <span>Export</span>
             </button>
 
@@ -737,7 +737,7 @@ export default function App() {
               onClick={() => handleOpenAddWorker()}
               title="Add a new employee group (Mason, M-Helper, F-Helper)"
             >
-              <UserPlus size={15} />
+              <UserPlus size={13.5} />
               <span>Add Employee</span>
             </button>
           </div>
