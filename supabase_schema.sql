@@ -127,13 +127,10 @@ BEGIN
   END;
 END $$;
 
--- Migration for existing databases: add soft-delete and lifecycle columns
+-- Migration for existing databases: ensure week assignment and lifecycle columns exist
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS assigned_week VARCHAR(20) DEFAULT NULL;
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS created_at_week VARCHAR(20) DEFAULT NULL;
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at_week VARCHAR(20) DEFAULT NULL;
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
-
--- Backfill any existing workers to week 2026-09-08 so they don't leak into other weeks
-UPDATE workers SET assigned_week = '2026-09-08', created_at_week = '2026-09-08' WHERE assigned_week IS NULL;
 
 
