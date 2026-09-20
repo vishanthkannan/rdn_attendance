@@ -178,15 +178,17 @@ button, input, select, textarea {
 }
 
 .brand-logo-img {
-  height: 54px;
+  height: 68px;
   width: auto;
-  max-width: 190px;
+  max-width: 220px;
   object-fit: contain;
   display: block;
   background: transparent;
   user-select: none;
   -webkit-user-drag: none;
-  transition: height 0.2s ease, transform 0.2s ease;
+  margin-top: -7px;
+  margin-bottom: -7px;
+  transition: transform 0.2s ease;
 }
 
 .brand-logo-img:hover {
@@ -215,7 +217,7 @@ button, input, select, textarea {
 
 .brand-title-group h1 {
   font-family: var(--font-heading);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 850;
   letter-spacing: -0.025em;
   color: #0f172a;
@@ -2146,8 +2148,10 @@ button, input, select, textarea {
   }
 
   .brand-logo-img {
-    height: 44px;
-    max-width: 140px;
+    height: 56px;
+    max-width: 170px;
+    margin-top: -6px;
+    margin-bottom: -6px;
   }
 
   .brand-title-group {
@@ -2573,8 +2577,10 @@ button, input, select, textarea {
   }
 
   .brand-logo-img {
-    height: 38px;
-    max-width: 110px;
+    height: 48px;
+    max-width: 140px;
+    margin-top: -5px;
+    margin-bottom: -5px;
   }
 
   .brand-title-group h1 {
