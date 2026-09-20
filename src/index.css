@@ -666,7 +666,7 @@ button, input, select, textarea {
 .current-week-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;
   color: #047857;
@@ -675,15 +675,6 @@ button, input, select, textarea {
   border-radius: var(--radius-full);
   margin-top: 0.3rem;
   border: 1px solid #a7f3d0;
-}
-
-.current-week-indicator::before {
-  content: '';
-  width: 6.5px;
-  height: 6.5px;
-  background: #10b981;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
 /* Recent 4 Weeks Pills */
