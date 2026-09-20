@@ -178,9 +178,9 @@ button, input, select, textarea {
 }
 
 .brand-logo-img {
-  height: 52px;
+  height: 72px;
   width: auto;
-  max-width: 175px;
+  max-width: 240px;
   object-fit: contain;
   display: block;
   background: transparent;
@@ -2146,8 +2146,8 @@ button, input, select, textarea {
   }
 
   .brand-logo-img {
-    height: 44px;
-    max-width: 120px;
+    height: 56px;
+    max-width: 160px;
   }
 
   .brand-title-group {
@@ -2573,8 +2573,8 @@ button, input, select, textarea {
   }
 
   .brand-logo-img {
-    height: 38px;
-    max-width: 95px;
+    height: 48px;
+    max-width: 130px;
   }
 
   .brand-title-group h1 {
