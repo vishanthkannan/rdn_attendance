@@ -637,21 +637,20 @@ export default function App() {
     <div className="app-container">
       {/* Top Navbar */}
       <header className="top-navbar">
-        <div className="brand-badge">
+        <div className="navbar-left">
           <img 
             src="/rdn_logo.png" 
             alt="RDN CREATORS" 
             className="brand-logo-img" 
           />
-          <div className="brand-divider" />
-          <div className="brand-title-group">
-            <div className="brand-title-row">
-              <h1>RDN CREATORS</h1>            </div>
-            <p>Workers Weekly Attendance &amp; Payroll</p>
-          </div>
         </div>
 
-        <div className="header-actions">
+        <div className="navbar-center brand-title-group">
+          <h1>RDN CREATORS</h1>
+          <p>Workers Weekly Attendance &amp; Payroll</p>
+        </div>
+
+        <div className="navbar-right header-actions">
           {/* Top Right Live Attendance Indicator - Just a Green Dot */}
           <div 
             className={`live-status-dot-indicator ${isOnline ? 'online' : 'offline'}`}
