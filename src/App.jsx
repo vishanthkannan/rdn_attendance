@@ -131,7 +131,7 @@ export default function App() {
             }
             if (cloudData.attendance !== undefined && cloudData.attendance !== null) setAttendance(cloudData.attendance);
             if (cloudData.closedWeeks) setClosedWeeks(cloudData.closedWeeks);
-            showToast('Connected & synced with Supabase Cloud');
+            showToast('Connected & synced with Cloud');
           }
         })
         .catch((err) => console.warn('Supabase fetch failed:', err));

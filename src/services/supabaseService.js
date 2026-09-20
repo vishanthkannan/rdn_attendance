@@ -302,7 +302,7 @@ export async function toggleClosedWeekCloud(weekId, isClosed) {
  */
 export async function syncLocalDataToSupabase(masons, attendance, closedWeeks) {
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase is not configured yet. Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.');
+    throw new Error('Cloud storage is not connected yet. Please check your cloud connection settings.');
   }
 
   // 1. Collect unique groups
