@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Lock } from 'lucide-react';
-import { formatWeekRange, PRESET_WEEKS, CURRENT_WEEK_ID, shiftWeek } from '../utils/dateUtils';
+import { formatWeekRange, getRecentWeeks, getCurrentWeekStart, shiftWeek } from '../utils/dateUtils';
 
 export default function WeekHeader({ 
   currentWeekStart, 
@@ -8,8 +8,14 @@ export default function WeekHeader({
   isWeekClosed,
   closedWeeks = []
 }) {
-  const isCurrentWeek = currentWeekStart === CURRENT_WEEK_ID;
+  const currentWeekId = getCurrentWeekStart();
+  const isCurrentWeek = currentWeekStart === currentWeekId;
   const formattedRange = formatWeekRange(currentWeekStart);
+
+  // Dynamically generate rolling recent weeks (2 past weeks, current week, 1 next week)
+  const recentWeeks = useMemo(() => {
+    return getRecentWeeks(2, 1);
+  }, []);
 
   const handlePrev = () => {
     const prev = shiftWeek(currentWeekStart, -1);
@@ -44,14 +50,11 @@ export default function WeekHeader({
               <span className="current-week-indicator">Current Week</span>
             )}
 
-
-
-
             {!isCurrentWeek && (
               <button 
                 className="btn btn-outline-blue btn-sm" 
                 style={{ padding: '0.2rem 0.6rem', fontSize: '0.74rem' }}
-                onClick={() => onSelectWeek(CURRENT_WEEK_ID)}
+                onClick={() => onSelectWeek(currentWeekId)}
               >
                 Back to Current Week
               </button>
@@ -70,13 +73,13 @@ export default function WeekHeader({
         </button>
       </div>
 
-      {/* Recent 4 Selectable Weeks */}
+      {/* Dynamic Selectable Recent Weeks */}
       <div className="recent-weeks-container">
         <span className="recent-weeks-label">
           <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
           Recent Weeks:
         </span>
-        {PRESET_WEEKS.map((preset) => {
+        {recentWeeks.map((preset) => {
           const isActive = preset.startDate === currentWeekStart;
           const isPresetClosed = closedWeeks.includes(preset.startDate);
           return (

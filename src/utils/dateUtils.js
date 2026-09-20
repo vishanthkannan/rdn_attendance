@@ -1,13 +1,14 @@
 // Date utilities for Monday to Sunday civil workers weekly attendance
 
-export const PRESET_WEEKS = [
-  { id: '2026-08-25', label: '25 Aug - 31 Aug', startDate: '2026-08-25', endDate: '2026-08-31', year: 2026 },
-  { id: '2026-09-01', label: '01 Sep - 07 Sep', startDate: '2026-09-01', endDate: '2026-09-07', year: 2026 },
-  { id: '2026-09-08', label: '08 Sep - 14 Sep', startDate: '2026-09-08', endDate: '2026-09-14', year: 2026, isCurrent: true },
-  { id: '2026-09-15', label: '15 Sep - 21 Sep', startDate: '2026-09-15', endDate: '2026-09-21', year: 2026 }
+/**
+ * Month names short and full
+ */
+export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTH_NAMES_FULL = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
-
-export const CURRENT_WEEK_ID = '2026-09-08';
+export const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 /**
  * Format date to YYYY-MM-DD
@@ -23,15 +24,96 @@ export function formatDateISO(date) {
  * Parse YYYY-MM-DD into a local Date object
  */
 export function parseDateISO(str) {
+  if (!str) return new Date();
   const [y, m, d] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
 /**
- * Month names short
+ * Returns Monday (YYYY-MM-DD) of the week containing the given date.
+ * Civil work week starts on Monday and ends on Sunday.
  */
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export function getMondayOfWeek(date = new Date()) {
+  const d = (date instanceof Date) ? new Date(date) : parseDateISO(date);
+  const day = d.getDay(); // 0 is Sun, 1 is Mon, ..., 6 is Sat
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return formatDateISO(d);
+}
+
+/**
+ * Returns Monday (YYYY-MM-DD) of the current real calendar week.
+ */
+export function getCurrentWeekStart() {
+  return getMondayOfWeek(new Date());
+}
+
+/**
+ * Current week ID dynamically computed from today's real date
+ */
+export const CURRENT_WEEK_ID = getCurrentWeekStart();
+
+/**
+ * Format range short e.g. "08 Sep - 14 Sep"
+ */
+export function formatWeekRangeShort(startDateStr) {
+  const start = parseDateISO(startDateStr);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  
+  const startD = String(start.getDate()).padStart(2, '0');
+  const startM = MONTH_NAMES[start.getMonth()];
+  const endD = String(end.getDate()).padStart(2, '0');
+  const endM = MONTH_NAMES[end.getMonth()];
+  
+  return `${startD} ${startM} - ${endD} ${endM}`;
+}
+
+/**
+ * Shift week by N weeks (-1 for prev, +1 for next)
+ */
+export function shiftWeek(startDateStr, weeksDelta) {
+  const d = parseDateISO(startDateStr);
+  d.setDate(d.getDate() + (weeksDelta * 7));
+  return formatDateISO(d);
+}
+
+/**
+ * Dynamically generate rolling recent weeks around currentWeekStart
+ * e.g. 2 past weeks, current week, and 1 next week (4 weeks total)
+ */
+export function getRecentWeeks(countPast = 2, countFuture = 1, referenceDate = getCurrentWeekStart()) {
+  const currentMonday = (typeof referenceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(referenceDate))
+    ? referenceDate
+    : getMondayOfWeek(referenceDate);
+
+  const realCurrentMonday = getCurrentWeekStart();
+  const weeks = [];
+
+  for (let delta = -countPast; delta <= countFuture; delta++) {
+    const startStr = shiftWeek(currentMonday, delta);
+    const startObj = parseDateISO(startStr);
+    const endObj = new Date(startObj);
+    endObj.setDate(startObj.getDate() + 6);
+    const endStr = formatDateISO(endObj);
+
+    weeks.push({
+      id: startStr,
+      label: formatWeekRangeShort(startStr),
+      startDate: startStr,
+      endDate: endStr,
+      year: startObj.getFullYear(),
+      isCurrent: (startStr === realCurrentMonday)
+    });
+  }
+
+  return weeks;
+}
+
+/**
+ * Preset weeks initialized dynamically from current week
+ */
+export const PRESET_WEEKS = getRecentWeeks();
 
 /**
  * Generate 7 days for a given week starting from startDate (YYYY-MM-DD)
@@ -44,7 +126,8 @@ export function getDaysOfWeek(startDateStr) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
     const dateStr = formatDateISO(d);
-    const dayName = DAY_NAMES[i];
+    const dayOfWeekIdx = (d.getDay() + 6) % 7; // 0=Mon, 6=Sun
+    const dayName = DAY_NAMES[dayOfWeekIdx];
     const dateNumber = String(d.getDate()).padStart(2, '0');
     const monthName = MONTH_NAMES[d.getMonth()];
     
@@ -80,15 +163,6 @@ export function formatWeekRange(startDateStr) {
 }
 
 /**
- * Shift week by N weeks (-1 for prev, +1 for next)
- */
-export function shiftWeek(startDateStr, weeksDelta) {
-  const d = parseDateISO(startDateStr);
-  d.setDate(d.getDate() + (weeksDelta * 7));
-  return formatDateISO(d);
-}
-
-/**
  * Generate all days for a given month (e.g. "2026-09")
  */
 export function getDaysInMonth(yearMonthStr) {
@@ -118,8 +192,42 @@ export function getDaysInMonth(yearMonthStr) {
 }
 
 /**
+ * Dynamically generates list of months available for export/reporting:
+ * Past 6 months, current month, next month, plus any month found in attendance.
+ */
+export function getAvailableMonths(attendance = {}) {
+  const monthMap = new Map();
+  const now = new Date();
+
+  // 1. Rolling window of past 6 months to next 1 month
+  for (let offset = -6; offset <= 1; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${MONTH_NAMES_FULL[d.getMonth()]} ${d.getFullYear()}`;
+    monthMap.set(ym, { id: ym, label, year: d.getFullYear(), month: d.getMonth() });
+  }
+
+  // 2. Also include any month recorded in attendance
+  if (attendance) {
+    Object.keys(attendance).forEach((weekKey) => {
+      if (weekKey && weekKey.length >= 7) {
+        const ym = weekKey.slice(0, 7);
+        if (!monthMap.has(ym)) {
+          const [y, m] = ym.split('-').map(Number);
+          const monthIdx = m - 1;
+          const label = `${MONTH_NAMES_FULL[monthIdx] || ym} ${y}`;
+          monthMap.set(ym, { id: ym, label, year: y, month: monthIdx });
+        }
+      }
+    });
+  }
+
+  return Array.from(monthMap.values()).sort((a, b) => b.id.localeCompare(a.id));
+}
+
+/**
  * Resolves which week a worker was assigned to.
- * Checks assignedWeek, createdAtWeek, embedded ID week, or defaults to CURRENT_WEEK_ID.
+ * Checks assignedWeek, createdAtWeek, embedded ID week, or defaults to dynamic current week.
  */
 export function getWorkerAssignedWeek(worker) {
   if (!worker) return null;
@@ -135,8 +243,8 @@ export function getWorkerAssignedWeek(worker) {
     return match[0];
   }
 
-  // 3. Fallback for legacy workers that don't have the date in ID
-  return CURRENT_WEEK_ID;
+  // 3. Dynamic fallback for legacy workers that don't have the date in ID
+  return getCurrentWeekStart();
 }
 
 /**

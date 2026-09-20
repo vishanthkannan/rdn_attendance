@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Download, Calendar, FileSpreadsheet, FileText, X, CheckCircle2 } from 'lucide-react';
 import { 
-  PRESET_WEEKS, 
   formatWeekRange, 
   getDaysInMonth,
   isWorkerVisibleInWeek,
-  isWorkerVisibleInMonth
+  isWorkerVisibleInMonth,
+  getAvailableMonths,
+  getRecentWeeks,
+  formatWeekRangeShort,
+  formatDateISO
 } from '../utils/dateUtils';
 import { exportWeeklyPDF, exportMonthlyPDF } from '../utils/pdfExport';
 
@@ -23,13 +26,38 @@ export default function ExportModal({
   const [reportType, setReportType] = useState('weekly'); // 'weekly' | 'monthly'
   const [selectedWeek, setSelectedWeek] = useState(currentWeekStart);
 
-  // Available months
-  const availableMonths = [
-    { id: '2026-09', label: 'September 2026', year: 2026, month: 8 },
-    { id: '2026-08', label: 'August 2026', year: 2026, month: 7 },
-    { id: '2026-10', label: 'October 2026', year: 2026, month: 9 }
-  ];
-  const [selectedMonth, setSelectedMonth] = useState('2026-09');
+  // Dynamic available months based on today and attendance history
+  const currentMonthId = useMemo(() => formatDateISO(new Date()).slice(0, 7), []);
+  const availableMonths = useMemo(() => getAvailableMonths(attendance), [attendance]);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthId);
+
+  // Dynamic candidate weeks for export (recent weeks + attendance history)
+  const exportWeeks = useMemo(() => {
+    const weekMap = new Map();
+
+    if (currentWeekStart) {
+      weekMap.set(currentWeekStart, {
+        id: currentWeekStart,
+        label: formatWeekRangeShort(currentWeekStart)
+      });
+    }
+
+    getRecentWeeks(4, 1).forEach((w) => {
+      if (!weekMap.has(w.id)) {
+        weekMap.set(w.id, { id: w.id, label: w.label });
+      }
+    });
+
+    if (attendance) {
+      Object.keys(attendance).forEach((wId) => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(wId) && !weekMap.has(wId)) {
+          weekMap.set(wId, { id: wId, label: formatWeekRangeShort(wId) });
+        }
+      });
+    }
+
+    return Array.from(weekMap.values()).sort((a, b) => b.id.localeCompare(a.id));
+  }, [currentWeekStart, attendance]);
 
   // Workers visible for the selected week (preserves historical workers when exporting past weeks)
   const weekMasons = useMemo(() => {
@@ -327,7 +355,7 @@ export default function ExportModal({
                 onChange={(e) => setSelectedWeek(e.target.value)}
                 className="export-select-input"
               >
-                {PRESET_WEEKS.map((w) => (
+                {exportWeeks.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.label} {w.id === currentWeekStart ? '(Currently Active)' : ''}
                   </option>

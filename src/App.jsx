@@ -59,7 +59,7 @@ export default function App() {
     }, 3000);
   };
 
-  // Active Week State (Defaults to 08 Sep - 14 Sep 2026)
+  // Active Week State (Defaults to current week Monday dynamically)
   const [currentWeekStart, setCurrentWeekStart] = useState(CURRENT_WEEK_ID);
 
   // Data States
